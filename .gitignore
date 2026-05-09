@@ -4,4 +4,4 @@ sessions/
 tmp/
 *.zip
 package-lock.json
-.npm
+.npm/
