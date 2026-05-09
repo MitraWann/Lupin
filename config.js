@@ -9,7 +9,7 @@ require('dotenv').config();
 // ── Owner & Akses ─────────────────────────────────────────────
 global.owner        = ['6285324023198'];   // wajib diisi — nomor owner (tanpa +)
 global.mods         = ['6285324023198'];   // wajib diisi — nomor moderator
-global.nameowner    = 'Wann';
+global.nameowner    = 'Mitra';
 global.numberowner  = '6285324023198';
 
 // ── Kontak & Sosial ───────────────────────────────────────────
@@ -18,7 +18,7 @@ global.gc           = 'https://chat.whatsapp.com/Futdln0tFp2Jf0uSkp9o1O?mode=gi_
 global.instagram    = 'https://instagram.com/mitrawann';
 
 // ── Identitas Bot ─────────────────────────────────────────────
-global.botname      = 'Lupin MD';
+global.botname      = 'Flora';
 global.wm           = `© ${global.botname}`;
 
 // ── Pesan Sistem ──────────────────────────────────────────────

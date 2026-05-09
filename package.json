@@ -1,5 +1,5 @@
 {
-    "name": "Pandora",
+    "name": "Flora",
     "version": "1.0.1",
     "description": "Lightweight WhatsApp Bot",
     "depecrated": false,
@@ -23,16 +23,16 @@
         "whiskeysockets",
         "baileys"
     ],
-    "homepage": "https://github.com/TulipNex/Mobius",
+    "homepage": "https://github.com/MitraWann/Flora",
     "author": {
         "name": "Mitra"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/TulipNex/Mobius.git"
+        "url": "git+https://github.com/MitraWann/Flora.git"
     },
     "bugs": {
-        "url": "https://github.com/TulipNex/Mobius/issues"
+        "url": "https://github.com/MitraWann/Flora/issues"
     },
     "license": "MIT",
     "dependencies": {
