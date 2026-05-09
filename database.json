@@ -47,7 +47,7 @@
       "title": 0,
       "level": 0,
       "location": "Gubuk",
-      "exp": 2335,
+      "exp": 2361,
       "pc": 0,
       "ojek": 0,
       "coin": 0,
@@ -66,8 +66,8 @@
       "lastngojek": 0,
       "lastseen": 0,
       "registered": false,
-      "command": 110,
-      "commandTotal": 110,
+      "command": 111,
+      "commandTotal": 111,
       "name": "+62 853-2402-3198",
       "skata": 0,
       "age": -1,
@@ -79,7 +79,7 @@
       "autolevelup": true,
       "lasttaxi": 0,
       "taxi": 0,
-      "lastCmd": 1778365993027,
+      "lastCmd": 1778366068450,
       "saldo_kas": 1000,
       "riwayatKeuangan": [
         {
