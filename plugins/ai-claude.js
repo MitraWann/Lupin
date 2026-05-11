@@ -3,7 +3,7 @@
  * Location: ./plugins/ai-claude.js
  */
 
-const { chat, clearSession } = require('../lib/scraper-deepai');
+const { chat, clearSession } = require('../lib/scrape/scraper-deepai');
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     // Validasi input kosong

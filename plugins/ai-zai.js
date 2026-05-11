@@ -1,4 +1,4 @@
-const { chatZai } = require('../lib/zai.js'); // Sesuaikan path library jika berbeda
+const { chatZai } = require('../lib/scrape/zai.js'); // Sesuaikan path library jika berbeda
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     // 1. Validasi Input User

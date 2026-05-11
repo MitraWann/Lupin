@@ -1,6 +1,9 @@
 const fs = require('fs')
 const path = require('path')
 
+// IMPOR HELPER DARI LIBRARY BARU
+const { sendButton, extractPayload } = require('../lib/nativeFlow')
+
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     if (!text) {
         return m.reply(
@@ -59,62 +62,55 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         return m.reply(`❌ Tidak ditemukan file plugin dengan command atau prefix *"${text}"*.`)
     }
 
-    let teks = `🔎 *HASIL PENCARIAN COMMAND* 🔎\n\n` +
+    // ==========================================
+    // PERAKITAN DATA BUTTON
+    // ==========================================
+    let txt = `🔎 *HASIL PENCARIAN COMMAND* 🔎\n\n` +
                `> ⌨️ *Kata Kunci:* ${text}\n` +
                `> 📂 *Ditemukan:* ${matches.length} file\n\n` +
-               `*Lokasi File:*\n`
+               `> _Silahkan ketuk tombol "PILIH FILE" di bawah untuk melihat isi kodenya._`
 
-    matches.forEach((file, i) => {
-        // Ditambahkan backtick (`) agar mudah ditangkap oleh Regex saat di-reply
-        teks += `> *${i + 1}.* \`${file}\`\n`
-    })
+    let limit = Math.min(30, matches.length); // Membatasi max 30 baris list agar WA tidak crash
+    let buttonRows = [];
 
-    // Petunjuk untuk fitur baca file via reply
-    teks += `\n_Balas (reply) pesan ini dengan *nomor urut* untuk melihat isi scriptnya._`
-
-    await conn.sendMessage(m.chat, { text: teks.trim() }, { quoted: m })
-}
-
-// ==========================================
-// FITUR BACA FILE OTOMATIS VIA REPLY (CLEAN CODE)
-// ==========================================
-handler.before = async function (m, { conn, isOwner }) {
-    // 1. Keamanan ekstra: Hanya Owner
-    if (!isOwner) return false 
-
-    // 2. Pastikan pesan adalah balasan ke pesan bot
-    if (!m.quoted || !m.quoted.fromMe || !m.quoted.text) return false
-
-    // 3. Pastikan pesan yang dibalas adalah hasil pencarian file ini
-    if (!m.quoted.text.includes('🔎 *HASIL PENCARIAN COMMAND* 🔎')) return false
-    
-    // 4. Ambil angka yang diketik Boss
-    let num = parseInt(m.text.trim())
-    if (isNaN(num)) return false 
-
-    // 5. Ekstrak nama file berdasarkan nomor urut (menyesuaikan format list "> *1.* `file.js`")
-    let match = m.quoted.text.match(new RegExp(`^> \\*${num}\\.\\*\\s*\`([^\`]+)\``, 'm'))
-    if (!match) {
-        await m.reply('⚠️ Nomor urut tidak valid atau tidak ada di dalam daftar.')
-        return true
+    // Looping dan format hasil langsung ke dalam button
+    for (let i = 0; i < limit; i++) {
+        let fileName = matches[i];
+        
+        buttonRows.push({
+            title: fileName.length > 50 ? fileName.substring(0, 47) + '...' : fileName,
+            description: `Klik untuk melihat source code`,
+            id: `read_cmd_${fileName}` // Custom payload ID khusus untuk owner file reading
+        });
     }
 
-    let filename = match[1]
-    let filePath = path.join('./plugins', filename)
-
-    if (!fs.existsSync(filePath)) {
-        await m.reply(`⚠️ Command \`${filename}\` sudah tidak ditemukan di folder plugins.`)
-        return true
+    if (matches.length > 30) {
+        txt += `\n\n_Catatan: Hanya menampilkan 30 hasil pertama karena batasan sistem._`
     }
 
-    // 6. Baca isi file dan kirimkan murni tanpa header
-    let content = fs.readFileSync(filePath, 'utf-8')
-    
-    await conn.sendMessage(m.chat, {
-        text: `${content}`
-    }, { quoted: m })
+    // Konfigurasi Button Type: List/Single Select
+    const buttons = [
+        {
+            name: "single_select",
+            buttonParamsJson: JSON.stringify({
+                title: "📂 PILIH FILE",
+                sections: [{
+                    title: `Pencarian Command: ${text}`,
+                    rows: buttonRows
+                }]
+            })
+        }
+    ];
 
-    return true
+    try {
+        await sendButton(conn, m.chat, buttons, m, {
+            content: txt.trim(),
+            footer: global.wm || '© System Plugin Manager'
+        });
+    } catch (e) {
+        console.error(e);
+        m.reply("❌ Gagal mengirim menu interaktif. Coba lagi nanti.");
+    }
 }
 
 handler.help = ['findcmd <cmd>']
@@ -122,4 +118,107 @@ handler.tags = ['owner']
 handler.command = /^(findcmd|fc|caricmd)$/i
 handler.owner = true
 
-module.exports = handler
+// ==========================================
+// INTERCEPTOR: Pembaca Respon Native Flow 
+// ==========================================
+handler.all = async function (m) {
+    let conn = this; 
+    
+    // Gunakan Helper untuk Mengekstrak ID Tombol
+    let params = extractPayload(m);
+
+    // Jika pesan tombol berhasil diekstrak dan mengandung perintah "read_cmd_"
+    if (params?.id && params.id.startsWith('read_cmd_')) {
+        try {
+            // 1. Keamanan: Cek secara eksplisit apakah pengklik adalah owner (Mencegah member nyolong klik)
+            let isOwner = [conn.user?.id?.split(':')[0] + '@s.whatsapp.net', ...global.owner.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')].includes(m.sender.replace(/[^0-9]/g, '') + '@s.whatsapp.net');
+            if (!isOwner) {
+                return m.reply("⛔ Hanya Owner yang diizinkan untuk melihat Source Code!");
+            }
+
+            // 2. Ekstrak nama file dan path
+            let filename = params.id.replace('read_cmd_', '');
+            let filePath = path.join('./plugins', filename);
+
+            // 3. Validasi Keberadaan File
+            if (!fs.existsSync(filePath)) {
+                return m.reply(`⚠️ File \`${filename}\` sudah tidak ditemukan di folder plugins.`);
+            }
+
+            // 4. Kirimkan Source Code (Menggunakan UI Rich Response / Clean Code Meta AI)
+            let codeContent = fs.readFileSync(filePath, 'utf-8');
+            let fileSize = fs.statSync(filePath).size; 
+
+            // Batasi panjang karakter untuk mencegah error payload WA (array object terlalu besar)
+            const MAX_CHARS = 80000;
+            if (codeContent.length > MAX_CHARS) {
+                codeContent = codeContent.substring(0, MAX_CHARS) + '\n\n// ... [KODE TERPOTONG: Melebihi batas aman render syntax highlighter UI WA (80000 char)]';
+            }
+            
+            const headerText = `*🧩 Plugin :* ${filename}\n*🗃️ Ukuran :* ${(fileSize / 1024).toFixed(2)} KB`;
+
+            // Tokenizer Sederhana untuk Syntax Highlighting
+            let codeBlocks = [];
+            let lastIndex = 0;
+            let match;
+            
+            // Regex untuk mendeteksi berbagai token JS
+            const tokenRegex = /(\/\/.*|\/\*[\s\S]*?\*\/)|((["'`])(?:\\.|[^\\])*?\3)|\b(let|const|var|function|async|await|return|if|else|for|while|class|import|export|from|try|catch|new|this|typeof|instanceof|switch|case|break|continue|default|throw|delete|yield)\b|\b(true|false|null|undefined|NaN)\b|\b(\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b/g;
+
+            while ((match = tokenRegex.exec(codeContent)) !== null) {
+                if (match.index > lastIndex) {
+                    codeBlocks.push({ highlightType: 0, codeContent: codeContent.substring(lastIndex, match.index) });
+                }
+
+                if (match[1]) codeBlocks.push({ highlightType: 4, codeContent: match[0] }); 
+                else if (match[2]) codeBlocks.push({ highlightType: 2, codeContent: match[0] });
+                else if (match[4]) codeBlocks.push({ highlightType: 1, codeContent: match[0] }); 
+                else if (match[5] || match[6]) codeBlocks.push({ highlightType: 3, codeContent: match[0] }); 
+                
+                lastIndex = tokenRegex.lastIndex;
+            }
+
+            if (lastIndex < codeContent.length) {
+                codeBlocks.push({ highlightType: 0, codeContent: codeContent.substring(lastIndex) });
+            }
+
+            // Mengeksekusi relayMessage menggunakan raw payload dari Meta AI
+            await conn.relayMessage(m.chat, {
+                botForwardedMessage: {
+                    message: {
+                        richResponseMessage: {
+                            messageType: 1,
+                            submessages: [
+                                {
+                                    messageType: 2,
+                                    messageText: headerText
+                                },
+                                {
+                                    messageType: 5,
+                                    codeMetadata: {
+                                        codeLanguage: "javascript",
+                                        codeBlocks: codeBlocks
+                                    }
+                                }
+                            ],
+                            contextInfo: {
+                                forwardingScore: 1,
+                                isForwarded: true,
+                                forwardedAiBotMessageInfo: { botJid: "867051314767696@s.whatsapp.net" },
+                                forwardOrigin: 4
+                            }
+                        }
+                    }
+                }
+            }, { 
+                quoted: m, 
+                messageId: conn.generateMessageTag ? conn.generateMessageTag() : m.key.id 
+            });
+
+        } catch (e) {
+            console.error("Gagal membaca respon file plugin (findcmd):", e);
+        }
+    }
+};
+
+module.exports = handler;

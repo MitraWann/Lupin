@@ -1,4 +1,4 @@
-const { kimiai, listChats } = require('../lib/scraper-kimi');
+const { kimiai, listChats } = require('../lib/scrape/scraper-kimi');
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     // 1. Validasi Input

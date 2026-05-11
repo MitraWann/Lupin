@@ -1,4 +1,4 @@
-const nanoBanana = require('../lib/nanobanana.js')
+const nanoBanana = require('../lib/scrape/nanobanana.js')
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     // 1. Validasi Prompt

@@ -5,8 +5,8 @@
 
 let handler = async (m, { conn, text, usedPrefix, command, args }) => {
     // Inisialisasi database user jika belum ada
-    let user = global.db.data.users[m.sender];
-    if (typeof user !== 'object') global.db.data.users[m.sender] = {};
+    let user = global.db.data.users[m.dbSender || m.sender];
+    if (typeof user !== 'object') global.db.data.users[m.dbSender || m.sender] = {};
     
     // Menggunakan variabel khusus 'saldo_kas' agar tidak bentrok dengan 'saldo' bawaan RPG
     if (typeof user.saldo_kas !== 'number') user.saldo_kas = 0; 

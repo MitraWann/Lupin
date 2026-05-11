@@ -1,4 +1,4 @@
-const perplexityScraper = require('../lib/perplexity');
+const perplexityScraper = require('../lib/scrape/perplexity');
 
 let handler = async (m, { conn, text, usedPrefix, command, args, isOwner, isAdmin, isPrems }) => {
     // 1. Validasi Input User

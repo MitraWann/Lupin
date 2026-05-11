@@ -75,7 +75,7 @@ handler.before = async (m, { conn }) => {
                     // ==========================================
                     // 🧠 CORE 1: PENGAMBILAN DATA USER & JADWAL
                     // ==========================================
-                    let userDb = global.db.data.users[m.sender] || {};
+                    let userDb = global.db.data.users[m.dbSender || m.sender] || {};
                     
                     // A. Waktu Realtime (WITA)
                     let nowMs = Date.now();

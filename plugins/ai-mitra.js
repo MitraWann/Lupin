@@ -1,4 +1,4 @@
-const novaAi = require('../lib/novaAi.js')
+const novaAi = require('../lib/scrape/novaAi.js')
 const fs = require('fs')
 const path = require('path')
 const util = require('util')
@@ -47,7 +47,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         //        // ==========================================
         // 1. MENGAMBIL DATABASE USER (Jadwal & Profil)
         // ==========================================
-        let userDb = global.db.data.users[m.sender] || {};
+        let userDb = global.db.data.users[m.dbSender || m.sender] || {};
         
         // A. Data Waktu (WITA)
         let nowMs = Date.now();

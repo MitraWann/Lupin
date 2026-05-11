@@ -8,7 +8,7 @@ const fetch = require('node-fetch');
 const moment = require('moment-timezone');
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-    let user = global.db.data.users[m.sender];
+    let user = global.db.data.users[m.dbSender || m.sender];
     
     // Inisialisasi properti database pengguna jika belum ada
     if (typeof user.vebriy !== 'boolean') user.vebriy = false;
@@ -51,7 +51,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 // AUTO-REPLY LISTENER (HOOK)
 // ==========================================
 handler.before = async function (m, { conn }) {
-    let user = global.db.data.users[m.sender];
+    let user = global.db.data.users[m.dbSender || m.sender];
     
     // Validasi: Pastikan fitur menyala, bukan pesan dari bot sendiri, dan berupa teks
     if (!user || !user.vebriy || m.isBaileys || m.fromMe || !m.text) return false;

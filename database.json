@@ -7,7 +7,7 @@
       "title": 0,
       "level": 0,
       "location": "Gubuk",
-      "exp": 86,
+      "exp": 0,
       "pc": 0,
       "ojek": 0,
       "coin": 0,
@@ -28,7 +28,7 @@
       "registered": false,
       "command": 0,
       "commandTotal": 0,
-      "name": "Me",
+      "name": "https://Bít.ly/Lupin",
       "skata": 0,
       "age": -1,
       "regTime": -1,
@@ -45,9 +45,9 @@
       "pengeluaran": 0,
       "energi": 100,
       "title": 0,
-      "level": 5,
+      "level": 4,
       "location": "Gubuk",
-      "exp": 2489,
+      "exp": 2186,
       "pc": 0,
       "ojek": 0,
       "coin": 0,
@@ -66,8 +66,8 @@
       "lastngojek": 0,
       "lastseen": 0,
       "registered": false,
-      "command": 117,
-      "commandTotal": 117,
+      "command": 91,
+      "commandTotal": 91,
       "name": "+62 853-2402-3198",
       "skata": 0,
       "age": -1,
@@ -79,30 +79,16 @@
       "autolevelup": true,
       "lasttaxi": 0,
       "taxi": 0,
-      "lastCmd": 1778366360994,
-      "saldo_kas": 1000,
-      "riwayatKeuangan": [
-        {
-          "id": 1778352807392,
-          "trxId": "FQMQ",
-          "tipe": "MASUK",
-          "nominal": 1000,
-          "ket": "Transfer",
-          "tanggal": "10/05/26, 02.53",
-          "hari": "Minggu",
-          "tanggalLengkap": "10 Mei 2026",
-          "waktu": "02.53 WITA"
-        }
-      ]
+      "lastCmd": 1778513800303
     },
-    "6285591068997@s.whatsapp.net": {
+    "628989240628@s.whatsapp.net": {
       "saldo": 0,
       "pengeluaran": 0,
       "energi": 100,
       "title": 0,
       "level": 0,
       "location": "Gubuk",
-      "exp": 24,
+      "exp": 0,
       "pc": 0,
       "ojek": 0,
       "coin": 0,
@@ -121,9 +107,9 @@
       "lastngojek": 0,
       "lastseen": 0,
       "registered": false,
-      "command": 1,
-      "commandTotal": 1,
-      "name": "+62 855-9106-8997",
+      "command": 0,
+      "commandTotal": 0,
+      "name": "+62 898-9240-628",
       "skata": 0,
       "age": -1,
       "regTime": -1,
@@ -133,65 +119,10 @@
       "role": "Newbie ㋡",
       "autolevelup": true,
       "lasttaxi": 0,
-      "taxi": 0,
-      "lastCmd": 1778348712137
+      "taxi": 0
     }
   },
   "chats": {
-    "120363408150354118@g.us": {
-      "isBanned": false,
-      "welcome": true,
-      "detect": false,
-      "mute": false,
-      "listStr": {},
-      "sWelcome": "Hai, @user!\nSelamat datang di grup @subject\n\n@desc",
-      "sBye": "Selamat tinggal @user!",
-      "sPromote": "",
-      "sDemote": "",
-      "delete": true,
-      "antiLink": true,
-      "antiSticker": false,
-      "viewonce": false,
-      "antiToxic": false,
-      "expired": 0,
-      "antibot": false,
-      "rpg": false,
-      "nsfw": false,
-      "memgc": {
-        "6283853531950@s.whatsapp.net": {
-          "blacklist": false,
-          "banned": false,
-          "bannedTime": 0,
-          "chat": 0,
-          "chatTotal": 0,
-          "command": 0,
-          "commandTotal": 0,
-          "lastseen": 0
-        },
-        "6285324023198@s.whatsapp.net": {
-          "blacklist": false,
-          "banned": false,
-          "bannedTime": 0,
-          "chat": 0,
-          "chatTotal": 0,
-          "command": 3,
-          "commandTotal": 3,
-          "lastseen": 0,
-          "lastCmd": 1778346842327
-        },
-        "6285591068997@s.whatsapp.net": {
-          "blacklist": false,
-          "banned": false,
-          "bannedTime": 0,
-          "chat": 0,
-          "chatTotal": 0,
-          "command": 1,
-          "commandTotal": 1,
-          "lastseen": 0,
-          "lastCmd": 1778348712137
-        }
-      }
-    },
     "6285324023198@s.whatsapp.net": {
       "isBanned": false,
       "welcome": true,
@@ -212,7 +143,60 @@
       "rpg": false,
       "nsfw": false,
       "memgc": {
+        "6283853531950@s.whatsapp.net": {
+          "blacklist": false,
+          "banned": false,
+          "bannedTime": 0,
+          "chat": 0,
+          "chatTotal": 0,
+          "command": 0,
+          "commandTotal": 0,
+          "lastseen": 0
+        },
         "6285324023198@s.whatsapp.net": {
+          "blacklist": false,
+          "banned": false,
+          "bannedTime": 0,
+          "chat": 0,
+          "chatTotal": 0,
+          "command": 0,
+          "commandTotal": 0,
+          "lastseen": 0
+        }
+      }
+    },
+    "120363425526743588@g.us": {
+      "isBanned": false,
+      "welcome": true,
+      "detect": false,
+      "mute": false,
+      "listStr": {},
+      "sWelcome": "Hai, @user!\nSelamat datang di grup @subject\n\n@desc",
+      "sBye": "Selamat tinggal @user!",
+      "sPromote": "",
+      "sDemote": "",
+      "delete": true,
+      "antiLink": true,
+      "antiSticker": false,
+      "viewonce": false,
+      "antiToxic": false,
+      "expired": 0,
+      "antibot": false,
+      "rpg": false,
+      "nsfw": false,
+      "memgc": {
+        "6285324023198@s.whatsapp.net": {
+          "blacklist": false,
+          "banned": false,
+          "bannedTime": 0,
+          "chat": 0,
+          "chatTotal": 0,
+          "command": 2,
+          "commandTotal": 2,
+          "lastseen": 0,
+          "lastCmd": 1778488400894
+        },
+        "628989240628@s.whatsapp.net": {
           "blacklist": false,
           "banned": false,
           "bannedTime": 0,
@@ -233,74 +217,11 @@
           "lastseen": 0
         }
       }
-    },
-    "221203734204662@lid": {
-      "isBanned": false,
-      "welcome": true,
-      "detect": false,
-      "mute": false,
-      "listStr": {},
-      "sWelcome": "Hai, @user!\nSelamat datang di grup @subject\n\n@desc",
-      "sBye": "Selamat tinggal @user!",
-      "sPromote": "",
-      "sDemote": "",
-      "delete": true,
-      "antiLink": true,
-      "antiSticker": false,
-      "viewonce": false,
-      "antiToxic": false,
-      "expired": 0,
-      "antibot": false,
-      "rpg": false,
-      "nsfw": false,
-      "memgc": {
-        "6285324023198@s.whatsapp.net": {
-          "blacklist": false,
-          "banned": false,
-          "bannedTime": 0,
-          "chat": 0,
-          "chatTotal": 0,
-          "command": 0,
-          "commandTotal": 0,
-          "lastseen": 0
-        }
-      }
-    },
-    "6283853531950@s.whatsapp.net": {
-      "isBanned": false,
-      "welcome": true,
-      "detect": false,
-      "mute": false,
-      "listStr": {},
-      "sWelcome": "Hai, @user!\nSelamat datang di grup @subject\n\n@desc",
-      "sBye": "Selamat tinggal @user!",
-      "sPromote": "",
-      "sDemote": "",
-      "delete": true,
-      "antiLink": true,
-      "antiSticker": false,
-      "viewonce": false,
-      "antiToxic": false,
-      "expired": 0,
-      "antibot": false,
-      "rpg": false,
-      "nsfw": false,
-      "memgc": {
-        "6283853531950@s.whatsapp.net": {
-          "blacklist": false,
-          "banned": false,
-          "bannedTime": 0,
-          "chat": 0,
-          "chatTotal": 0,
-          "command": 0,
-          "commandTotal": 0,
-          "lastseen": 0
-        }
-      }
     }
   },
   "stats": {},
   "msgs": {},
   "sticker": {},
-  "settings": {}
+  "settings": {},
+  "sendlater": []
 }

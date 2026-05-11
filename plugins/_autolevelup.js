@@ -3,7 +3,7 @@ const levelling = require('../lib/levelling')
 
 module.exports = {
     async before(m, { conn, isCommand }) {
-        let user = global.db.data.users[m.sender]
+        let user = global.db.data.users[m.dbSender || m.sender]
         let chat = global.db.data.chats[m.chat] || {}
 
         // Validasi: Abaikan jika tidak ada user, atau user mematikan autolevelup

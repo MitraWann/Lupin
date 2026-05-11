@@ -111,7 +111,7 @@ let handler = async (m, { conn, text, usedPrefix, command, args, isOwner, isAdmi
         return m.reply(caption);
     }
 
-    let user = global.db.data.users[m.sender];
+    let user = global.db.data.users[m.dbSender || m.sender];
 
     // 2. Fitur Reset Sesi
     if (text.toLowerCase() === 'reset') {

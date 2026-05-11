@@ -1,6 +1,6 @@
 let handler = m => m
 handler.before = m => {
-  let user = global.db.data.users[m.sender]
+  let user = global.db.data.users[m.dbSender || m.sender]
   if (user.afk > -1) {
     m.reply(`
 Kamu berhenti AFK${user.afkReason ? ' setelah ' + user.afkReason : ''}

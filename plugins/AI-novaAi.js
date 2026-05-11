@@ -1,4 +1,4 @@
-const novaAi = require('../lib/novaAi');
+const novaAi = require('../lib/scrape/novaAi');
 const util = require('util');
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {

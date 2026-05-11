@@ -1,4 +1,4 @@
-const { LumoClient } = require('../lib/lumo');
+const { LumoClient } = require('../lib/scrape/lumo');
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     // Validasi input
