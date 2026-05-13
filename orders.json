@@ -1,0 +1,103 @@
+{
+  "ORD1778523862212": {
+    "orderId": "ORD1778523862212",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "6285324023198@s.whatsapp.net",
+    "status": "INQUIRY",
+    "createdAt": 1778523862212
+  },
+  "ORD1778523962361": {
+    "orderId": "ORD1778523962361",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "6285324023198@s.whatsapp.net",
+    "status": "INQUIRY",
+    "createdAt": 1778523962362
+  },
+  "ORD1778524064658": {
+    "orderId": "ORD1778524064658",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6282215415550@s.whatsapp.net",
+    "chat": "120363425526743588@g.us",
+    "status": "INQUIRY",
+    "createdAt": 1778524064659
+  },
+  "ORD1778542423795": {
+    "orderId": "ORD1778542423795",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "120363425526743588@g.us",
+    "status": "INQUIRY",
+    "createdAt": 1778542423795
+  },
+  "ORD1778542470592": {
+    "orderId": "ORD1778542470592",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "120363425526743588@g.us",
+    "status": "ACCEPTED",
+    "createdAt": 1778542470592,
+    "updatedAt": 1778542527556
+  },
+  "ORD1778542629170": {
+    "orderId": "ORD1778542629170",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285591068997@s.whatsapp.net",
+    "chat": "6285591068997@s.whatsapp.net",
+    "status": "INQUIRY",
+    "createdAt": 1778542629170
+  },
+  "ORD1778542743343": {
+    "orderId": "ORD1778542743343",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285591068997@s.whatsapp.net",
+    "chat": "120363425526743588@g.us",
+    "status": "INQUIRY",
+    "createdAt": 1778542743343
+  },
+  "ORD1778542831261": {
+    "orderId": "ORD1778542831261",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "120363425526743588@g.us",
+    "status": "INQUIRY",
+    "createdAt": 1778542831261
+  },
+  "ORD1778543377149": {
+    "orderId": "ORD1778543377149",
+    "productId": "P001",
+    "productName": "Roses Bouquet",
+    "price": 150000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "120363425526743588@g.us",
+    "status": "INQUIRY",
+    "createdAt": 1778543377149
+  },
+  "ORD1778543616304": {
+    "orderId": "ORD1778543616304",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "120363425526743588@g.us",
+    "status": "INQUIRY",
+    "createdAt": 1778543616304
+  }
+}

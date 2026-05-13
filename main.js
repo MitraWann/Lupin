@@ -79,7 +79,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
     // ── Global state ──────────────────────────────────────────
     global.timestamp = { start: new Date() };
 
-    global.prefix = new RegExp('^[' + (opts.prefix || '‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']');
+    global.prefix = new RegExp('^[' + (opts.prefix || '‎xzXZ/i!#$%+£¢€¥^°¶∆×÷π√✓©®:;?&.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']');
 
     // ── Database setup ────────────────────────────────────────
     // [FIX] cloudDBAdapter tidak pernah di-import — tambahkan require kondisional
@@ -345,6 +345,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
             if (global.conn.handler)           global.conn.ev.off('messages.upsert',         global.conn.handler);
             if (global.conn.participantsUpdate) global.conn.ev.off('group-participants.update', global.conn.participantsUpdate);
             if (global.conn.onDelete)          global.conn.ev.off('message.delete',           global.conn.onDelete);
+            if (global.conn.pollHandler)       global.conn.ev.off('messages.update',          global.conn.pollHandler);
 
             const fnHandler      = handler?.handler             || handler?.default?.handler;
             const fnParticipants = handler?.participantsUpdate  || handler?.default?.participantsUpdate;
@@ -373,6 +374,12 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
             if (typeof fnDelete === 'function') {
                 global.conn.onDelete = fnDelete.bind(global.conn);
                 global.conn.ev.on('message.delete', global.conn.onDelete);
+            }
+
+            const fnPollUpdate = handler?.pollUpdate || handler?.default?.pollUpdate;
+            if (typeof fnPollUpdate === 'function') {
+                global.conn.pollHandler = fnPollUpdate.bind(global.conn);
+                global.conn.ev.on('messages.update', global.conn.pollHandler);
             }
 
             return true;

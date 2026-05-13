@@ -6,11 +6,10 @@ let handler = async (m, { conn, args }) => {
     if (!chats[chat]) chats[chat] = {}
 
     try {
-        if (!chats[chat].isMuted) {
-            return m.reply('ℹ️ Bot memang sudah aktif di chat ini.')
-        }
-
-        chats[chat].isMuted = false
+        if (!chats[chat].isBanned) {
+    		return m.reply('ℹ️ Bot memang sudah aktif di chat ini.')
+		}
+		chats[chat].isBanned = false
 
         await conn.sendMessage(m.chat, { react: { text: '🔊', key: m.key } })
         await conn.sendMessage(chat, { 

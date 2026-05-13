@@ -84,6 +84,19 @@ module.exports = {
         this.msgqueque = this.msgqueque || []
 
         if (!chatUpdate) return
+        // ── Raw Message Cache ─────────────────────────────────────────────────
+        global.rawMessages = global.rawMessages || new Map()
+        for (const raw of (chatUpdate.messages || [])) {
+            global.rawMessages.set(raw.key.id, raw)
+            if (global.rawMessages.size > 200) {
+                const firstKey = global.rawMessages.keys().next().value
+                global.rawMessages.delete(firstKey)
+            }
+            require('fs').writeFileSync(
+                `./tmp/msg_${raw.key.id}.json`,
+                JSON.stringify(raw, null, 2)
+            )
+        }
         if (chatUpdate.messages.length > 1) console.log(chatUpdate.messages)
         let m = chatUpdate.messages[chatUpdate.messages.length - 1]
         if (!m) return
@@ -281,7 +294,13 @@ module.exports = {
                 if (idx !== -1) this.msgqueque.splice(idx, 1)
             }
 
-            // ── Plugin.all (broadcast ke semua plugin) ────────────────────────
+                        // ── Plugin.all (broadcast ke semua plugin) ────────────────────────
+            const _chatDb = global.db.data.chats[m.chat] || {}
+            const _userDb = global.db.data.users[m.dbSender] || {}
+            const _isOwnerAll = [this.user.jid, ...global.owner]
+                .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
+                .includes(m.dbSender.replace(/[^0-9]/g, '') + '@s.whatsapp.net') || m.fromMe
+
             for (let name in global.plugins) {
                 let plugin = global.plugins[name]
                 if (!plugin) continue
@@ -289,6 +308,7 @@ module.exports = {
                 if (!plugin.all) continue
                 if (typeof plugin.all !== 'function') continue
                 try {
+                    if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) continue
                     await plugin.all.call(this, m, chatUpdate)
                 } catch (e) {
                     if (typeof e === 'string') continue
@@ -351,7 +371,7 @@ module.exports = {
                 const str2Regex   = str => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
                 let defaultPrefix = typeof global.prefix !== 'undefined'
                     ? global.prefix
-                    : /^[°•π÷×¶∆£¢€¥®™+✓_=|~!?@#$%^&.©^]/i
+                    : /^[°•π÷×¶∆£¢€¥®™+✓_|~!?@#$%^&.©^]/i
                 let _prefix = plugin.customPrefix ? plugin.customPrefix
                     : this.prefix ? this.prefix
                     : defaultPrefix
@@ -371,6 +391,7 @@ module.exports = {
                 if (!match) continue
 
                 if (typeof plugin.before === 'function') {
+                    if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) continue
                     if (await plugin.before.call(this, m, {
                         match, conn: this, participants, groupMetadata,
                         user, bot, isROwner, isOwner, isAdmin, isBotAdmin, isPrems, chatUpdate,
@@ -406,9 +427,8 @@ module.exports = {
                         let userDb = global.db.data.users[m.dbSender]
 
                         const bypassList = ['group-modebot.js', 'owner-unbanchat.js', 'owner-exec.js', 'owner-exec2.js', 'tool-delete.js']
-                        if (!bypassList.includes(name) && (chatDb?.isBanned || chatDb?.mute)) return
-                        if (name !== 'unbanchat.js'  && chatDb && chatDb.isBanned) return
-                        if (name !== 'unbanuser.js'  && userDb && userDb.banned)   return
+                        if (!isOwner && !bypassList.includes(name) && (chatDb?.isBanned || chatDb?.mute)) continue
+                        if (!isOwner && name !== 'unbanuser.js' && userDb && userDb.banned) continue
 
                         if (m.isGroup && chatDb?.memgc?.[m.dbSender]) {
                             chatDb.memgc[m.dbSender].command++
@@ -565,7 +585,7 @@ module.exports = {
                 case 'leave':
                 case 'invite':
                 case 'invite_v4':
-                    if (chat.welcome) {
+                    if (chat.welcome && !chat.isBanned) {
                         let groupMetadata = await this.groupMetadata(id).catch(() => null)
                         if (!groupMetadata) break
 

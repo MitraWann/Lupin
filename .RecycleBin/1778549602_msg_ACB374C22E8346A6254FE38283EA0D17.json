@@ -1,0 +1,23 @@
+{
+  "key": {
+    "remoteJid": "120363408150354118@g.us",
+    "fromMe": true,
+    "id": "ACB374C22E8346A6254FE38283EA0D17",
+    "participant": "130524911800339@lid",
+    "addressingMode": "lid"
+  },
+  "messageTimestamp": 1778549508,
+  "pushName": "https://Bít.ly/Lupin",
+  "broadcast": false,
+  "status": 2,
+  "message": {
+    "conversation": "https://whatsapp.com/channel/0029VbCFzkZCcW4uazD1fB0S",
+    "senderKeyDistributionMessage": {
+      "groupId": "120363408150354118@g.us",
+      "axolotlSenderKeyDistributionMessage": "MwjPtcDVBhAAGiAHFknM4GRZ9FDxJ0DresHiGpscGOgM0T2UsYBPAgOnBCIhBefiI1EgNBQjyG49VwsbfKf4uWFfZ4KP7ZJ0cXJ2VANd"
+    },
+    "messageContextInfo": {
+      "messageSecret": "33h9p/fXaIB590Q4i/DPcmLK0hD6AY48Vj66REamI2M="
+    }
+  }
+}

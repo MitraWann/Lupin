@@ -1,0 +1,26 @@
+{
+  "key": {
+    "remoteJid": "221203734204662@lid",
+    "remoteJidAlt": "6285324023198@s.whatsapp.net",
+    "fromMe": false,
+    "id": "A5D86CC14DA404A0F324AAEEF16FE446",
+    "participant": "",
+    "addressingMode": "lid"
+  },
+  "messageTimestamp": 1778552825,
+  "pushName": "ABCD",
+  "broadcast": false,
+  "message": {
+    "conversation": ".run",
+    "messageContextInfo": {
+      "deviceListMetadata": {
+        "senderTimestamp": "1778192345",
+        "recipientKeyHash": "A9LnPIPKKFOtRg==",
+        "recipientTimestamp": "1778325145"
+      },
+      "deviceListMetadataVersion": 2,
+      "messageSecret": "wxB9dvAXBgpcfO6Ikqc1HH1KeMmjBggZ0g/TUHUVT4s="
+    }
+  },
+  "verifiedBizName": "ABCD"
+}

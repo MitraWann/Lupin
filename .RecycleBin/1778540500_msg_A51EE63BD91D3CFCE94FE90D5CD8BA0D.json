@@ -1,0 +1,19 @@
+{
+  "key": {
+    "remoteJid": "120363425526743588@g.us",
+    "fromMe": false,
+    "id": "A51EE63BD91D3CFCE94FE90D5CD8BA0D",
+    "participant": "221203734204662@lid",
+    "participantAlt": "6285324023198@s.whatsapp.net",
+    "addressingMode": "lid"
+  },
+  "messageTimestamp": 1778540415,
+  "pushName": "ABCD",
+  "broadcast": false,
+  "message": {
+    "conversation": ".menu dowloader",
+    "messageContextInfo": {
+      "messageSecret": "3ZAQq3hzjOYYqgxlBXLD0DGru9gTWFWheZBFhI14osU="
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "key": {
+    "remoteJid": "6285324023198@s.whatsapp.net",
+    "fromMe": true,
+    "id": "3EB07456E8B7D6355DCA86"
+  },
+  "message": {
+    "extendedTextMessage": {
+      "text": "✅ *PLUGIN BERHASIL DIBUAT!*\n\n📁 *Nama File:* `run.js`\n📊 *Status:* File baru dibuat\n\n_Catatan: Bot biasanya akan otomatis memuat (auto-reload) file ini. Jika fitur belum muncul, silakan Restart bot dari panel._",
+      "contextInfo": {
+        "stanzaId": "A5A0FA147F91328B9341B2E520543019",
+        "participant": "221203734204662@lid",
+        "quotedMessage": {
+          "conversation": ".addplugin run.js let handler = async (m, { conn }) => {\n  if (!m.quoted) throw 'Reply pesan yang berisi raw JSON.'\n\n  const raw = m.quoted.text\n  if (!raw) throw 'Pesan yang di-reply tidak memiliki teks.'\n\n  let parsed\n  try {\n    parsed = JSON.parse(raw)\n  } catch {\n    throw 'JSON tidak valid.'\n  }\n\n  const msgContent = parsed.message\n  if (!msgContent) throw 'Field `message` tidak ditemukan.'\n\n  const { generateMessageID } = require('@whiskeysockets/baileys')\n\n  await conn.relayMessage(m.chat, msgContent, { messageId: generateMessageID() })\n}\n\nhandler.help = ['run']\nhandler.tags = ['tools']\nhandler.command = /^(run)$/i\n\nmodule.exports = handler"
+        },
+        "remoteJid": "221203734204662@lid"
+      }
+    },
+    "messageContextInfo": {
+      "messageSecret": "Jfglek3XbMv4+SDT9e4E0nORl7a39DLFzZzo9vkWd6w="
+    }
+  },
+  "messageTimestamp": "1778552822",
+  "status": "PENDING"
+}

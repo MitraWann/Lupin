@@ -97,9 +97,11 @@ handler.owner = true
 // INTERCEPTOR: Pembaca Respon Native Flow 
 // ==========================================
 handler.all = async function (m) {
-    let conn = this; 
-    
-    // [MODIFIKASI] Gunakan Helper untuk Mengekstrak ID Tombol
+    let conn = this;
+
+    let isOwner = [conn.user?.id?.split(':')[0] + '@s.whatsapp.net', ...global.owner.map(v => v.replace(/[^0-9]/g, '') + 			'@s.whatsapp.net')].includes(m.sender.replace(/[^0-9]/g, '') + '@s.whatsapp.net');
+    if (!isOwner) return;
+
     let params = extractPayload(m);
 
     // Jika pesan tombol berhasil diekstrak dan mengandung perintah "read_plugin_"

@@ -1,12 +1,12 @@
 let syntaxerror = require('syntax-error')
 let util = require('util')
 
-let handler  = async (m, _2) => {
+let handler = async (m, _2) => {
   let { conn, usedPrefix, noPrefix, args, groupMetadata } = _2
   let _return
   let _syntax = ''
-  let _text = (/^=/.test(usedPrefix) ? 'return ' : '') + noPrefix
-  let old = m.exp * 1 
+  let _text = (/^=>/.test(usedPrefix) ? 'return ' : '') + noPrefix
+  let old = m.exp * 1
   try {
     let i = 15
     let f = {
@@ -26,7 +26,7 @@ let handler  = async (m, _2) => {
     if (err) _syntax = '```' + err + '```\n\n'
     _return = e
   } finally {
-    conn.reply(m.chat, _syntax + util.format(_return), m)
+    if (_return !== undefined) conn.reply(m.chat, _syntax + util.format(_return), m)
     m.exp = old
   }
 }

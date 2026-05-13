@@ -1,0 +1,53 @@
+{
+  "key": {
+    "remoteJid": "221203734204662@lid",
+    "remoteJidAlt": "6285324023198@s.whatsapp.net",
+    "fromMe": false,
+    "id": "A58B11B427D337197C07AC1CC5ED3602",
+    "participant": "",
+    "addressingMode": "lid"
+  },
+  "messageTimestamp": 1778552858,
+  "pushName": "ABCD",
+  "broadcast": false,
+  "message": {
+    "extendedTextMessage": {
+      "text": ".raw",
+      "previewType": "NONE",
+      "contextInfo": {
+        "stanzaId": "16410.30554-317",
+        "participant": "130524911800339@lid",
+        "quotedMessage": {
+          "extendedTextMessage": {
+            "text": "https://flora.sm\n\nThis is Go Youn-jung",
+            "matchedText": "https://flora.sm",
+            "description": "Simple Whatsapp Bot",
+            "title": "Flora 🍀",
+            "previewType": "NONE",
+            "jpegThumbnail": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAQAAAAnOwc2AAAADElEQVR4nGNgGG4AAADSAAFQmYCvAAAAAElFTkSuQmCC",
+            "thumbnailDirectPath": "/o1/v/t24/f2/m234/AQMeCvIQr9slg2NjXGYImdBNJt1kUeZfpHr7cu-L37bTlaUm35tc8IQHe6Nf2EgvdWXziyTAbBurT4WoGzuwCEC8zfi-p75y2Id81y1rVQ?ccb=9-4&oh=01_Q5Aa4gFoXvXp-emoaHV2N9FpivJ_xn-pqAqoI2vVDGwdkfp8CA&oe=6A2A198B&_nc_sid=e6ed6c",
+            "thumbnailSha256": "0nEowmNmbqcF03Bid6fX2mRDRftvbjakMNNdJPNBNBU=",
+            "thumbnailEncSha256": "kriLwwf1YZkNGG4bxQeMm0n/OrbvvN51t2wc39OMyhk=",
+            "mediaKey": "3Kzo6gLxrusWdZq2GPVKSkbAJUvwJ4h4anYQTlGvKW8=",
+            "mediaKeyTimestamp": "1778552852",
+            "thumbnailHeight": 834,
+            "thumbnailWidth": 735,
+            "inviteLinkGroupTypeV2": "DEFAULT"
+          }
+        },
+        "quotedType": "EXPLICIT"
+      },
+      "inviteLinkGroupTypeV2": "DEFAULT"
+    },
+    "messageContextInfo": {
+      "deviceListMetadata": {
+        "senderTimestamp": "1778192345",
+        "recipientKeyHash": "A9LnPIPKKFOtRg==",
+        "recipientTimestamp": "1778325145"
+      },
+      "deviceListMetadataVersion": 2,
+      "messageSecret": "V4rTBrDrDgjEMT28OEx0K5SR26BrrMk8RLQszhihXBg="
+    }
+  },
+  "verifiedBizName": "ABCD"
+}

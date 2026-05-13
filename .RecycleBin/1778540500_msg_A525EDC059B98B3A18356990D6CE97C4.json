@@ -1,0 +1,47 @@
+{
+  "key": {
+    "remoteJid": "120363425526743588@g.us",
+    "fromMe": false,
+    "id": "A525EDC059B98B3A18356990D6CE97C4",
+    "participant": "221203734204662@lid",
+    "participantAlt": "6285324023198@s.whatsapp.net",
+    "addressingMode": "lid"
+  },
+  "messageTimestamp": 1778540437,
+  "pushName": "ABCD",
+  "broadcast": false,
+  "message": {
+    "extendedTextMessage": {
+      "text": ".dump",
+      "previewType": "NONE",
+      "contextInfo": {
+        "stanzaId": "3EB08F808794171A5FF769",
+        "participant": "130524911800339@lid",
+        "quotedMessage": {
+          "interactiveMessage": {
+            "body": {
+              "text": "🔍 *HASIL PENCARIAN FILE PLUGIN* 🔍\n\n> ⌨️ *Kata Kunci:* exec\n> 📂 *Ditemukan:* 2 file\n\n> _Silahkan ketuk tombol \"PILIH FILE\" di bawah untuk melihat isi kodenya._"
+            },
+            "footer": {
+              "text": "© Flora"
+            },
+            "nativeFlowMessage": {
+              "buttons": [
+                {
+                  "name": "single_select",
+                  "buttonParamsJson": "{\"title\":\"📂 PILIH FILE\",\"sections\":[{\"title\":\"Hasil Pencarian: exec\",\"highlight_label\":\"Plugins\",\"rows\":[{\"title\":\"owner-exec.js\",\"description\":\"Klik untuk melihat source code\",\"id\":\"read_plugin_owner-exec.js\"},{\"title\":\"owner-exec2.js\",\"description\":\"Klik untuk melihat source code\",\"id\":\"read_plugin_owner-exec2.js\"}]}]}"
+                }
+              ],
+              "messageParamsJson": ""
+            }
+          }
+        },
+        "quotedType": "EXPLICIT"
+      },
+      "inviteLinkGroupTypeV2": "DEFAULT"
+    },
+    "messageContextInfo": {
+      "messageSecret": "ezLrkVmTDXYKGDQ8qBCyPfMb+XltydUzMn+qbrxcXRg="
+    }
+  }
+}

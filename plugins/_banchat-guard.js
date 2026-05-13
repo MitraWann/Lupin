@@ -8,10 +8,6 @@ handler.before = async function (m, { conn, isOwner }) {
     // Ambil data grup saat ini dari database
     let chat = global.db.data.chats[m.chat] || {}
 
-    // Deteksi apakah pesan tersebut adalah perintah bot
-    let isCommand = m.text && /^[./!#]/.test(m.text)
-    if (!isCommand) return
-
     // Jika grup ini sedang dalam status BANNED (Bisu)
     if (chat.isBanned) {
         // Jika yang ngetik command BUKAN Owner, bajak pesannya!

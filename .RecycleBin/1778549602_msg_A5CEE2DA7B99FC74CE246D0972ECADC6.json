@@ -1,0 +1,16 @@
+{
+  "key": {
+    "remoteJid": "120363407187309269@newsletter",
+    "fromMe": false,
+    "id": "A5CEE2DA7B99FC74CE246D0972ECADC6",
+    "participant": "",
+    "addressingMode": "pn",
+    "server_id": "112"
+  },
+  "messageTimestamp": {
+    "low": 1778549564,
+    "high": 0,
+    "unsigned": true
+  },
+  "message": null
+}

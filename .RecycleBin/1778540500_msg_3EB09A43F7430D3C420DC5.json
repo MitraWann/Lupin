@@ -1,0 +1,29 @@
+{
+  "key": {
+    "remoteJid": "120363425526743588@g.us",
+    "fromMe": true,
+    "id": "3EB09A43F7430D3C420DC5"
+  },
+  "message": {
+    "extendedTextMessage": {
+      "text": "Raw object tidak ditemukan (pesan terlalu lama atau belum tercapture)",
+      "contextInfo": {
+        "stanzaId": "A525EDC059B98B3A18356990D6CE97C4",
+        "participant": "221203734204662@lid",
+        "quotedMessage": {
+          "extendedTextMessage": {
+            "text": ".dump",
+            "previewType": "NONE",
+            "inviteLinkGroupTypeV2": "DEFAULT"
+          }
+        }
+      }
+    },
+    "messageContextInfo": {
+      "messageSecret": "ulFNgZAvrgEtRaR3YOu00n+0ILDdyr1361rItVb8AJ8="
+    }
+  },
+  "messageTimestamp": "1778540437",
+  "status": "PENDING",
+  "participant": "6283853531950:47@s.whatsapp.net"
+}

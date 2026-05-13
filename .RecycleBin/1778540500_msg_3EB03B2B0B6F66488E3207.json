@@ -1,0 +1,29 @@
+{
+  "key": {
+    "remoteJid": "120363425526743588@g.us",
+    "fromMe": true,
+    "id": "3EB03B2B0B6F66488E3207"
+  },
+  "message": {
+    "extendedTextMessage": {
+      "text": "⛔ *Perintah Tidak Ditemukan!*\n\nMaaf Kak @6285324023198, menu *.spotify* tidak tersedia di dalam sistem.",
+      "contextInfo": {
+        "stanzaId": "A547C2CCE9E6C808467C7AFA9D266BDF",
+        "participant": "221203734204662@lid",
+        "quotedMessage": {
+          "conversation": ".spotify about you"
+        },
+        "mentionedJid": [
+          "6285324023198@s.whatsapp.net"
+        ],
+        "nonJidMentions": 0
+      }
+    },
+    "messageContextInfo": {
+      "messageSecret": "41dD4+Mpa4kxfmw2kYfCijl9NnoyzRAVyrx6DrUfReo="
+    }
+  },
+  "messageTimestamp": "1778540399",
+  "status": "PENDING",
+  "participant": "6283853531950:47@s.whatsapp.net"
+}

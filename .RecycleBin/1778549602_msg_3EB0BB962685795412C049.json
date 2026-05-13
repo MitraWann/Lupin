@@ -1,0 +1,24 @@
+{
+  "key": {
+    "remoteJid": "120363407187309269@newsletter",
+    "fromMe": true,
+    "id": "3EB0BB962685795412C049"
+  },
+  "message": {
+    "reactionMessage": {
+      "key": {
+        "remoteJid": "120363407187309269@newsletter",
+        "fromMe": false,
+        "id": "A5CEE2DA7B99FC74CE246D0972ECADC6",
+        "participant": ""
+      },
+      "text": "🎊",
+      "senderTimestampMs": "1778549568622"
+    }
+  },
+  "messageTimestamp": "1778549568",
+  "status": "ERROR",
+  "messageStubParameters": [
+    "479"
+  ]
+}

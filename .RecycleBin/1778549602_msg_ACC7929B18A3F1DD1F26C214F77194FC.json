@@ -1,0 +1,29 @@
+{
+  "key": {
+    "remoteJid": "6283853531950@s.whatsapp.net",
+    "fromMe": false,
+    "id": "ACC7929B18A3F1DD1F26C214F77194FC",
+    "participant": "",
+    "addressingMode": "pn"
+  },
+  "category": "peer",
+  "messageTimestamp": 1778549544,
+  "broadcast": false,
+  "message": {
+    "protocolMessage": {
+      "type": "PEER_DATA_OPERATION_REQUEST_RESPONSE_MESSAGE",
+      "peerDataOperationRequestResponseMessage": {
+        "peerDataOperationRequestType": "PLACEHOLDER_MESSAGE_RESEND",
+        "stanzaId": "3EB025C35F5BF12362C8CD",
+        "peerDataOperationResult": [
+          {
+            "mediaUploadResult": "SUCCESS",
+            "placeholderMessageResendResponse": {
+              "webMessageInfoBytes": "CkMKHTEyMDM2MzQwNzE4NzMwOTI2OUBuZXdzbGV0dGVyEAAaIEE1NzBCQjQ5RDk4NzMxN0I5OUNEMEEwMzA4MTIyQjNDGL+EitAGwAEB0gEgQTU3MEJCNDlEOTg3MzE3Qjk5Q0QwQTAzMDgxMjJCM0OgA6SGitAG+ANviAQA"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

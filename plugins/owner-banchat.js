@@ -11,11 +11,11 @@ let handler = async (m, { conn, args }) => {
             return m.reply('ℹ️ Bot sudah dalam keadaan bisu di chat ini.')
         }
 
-        chats[chat].isMuted = true
+        chats[chat].isBanned = true
 
         await conn.sendMessage(m.chat, { react: { text: '🔇', key: m.key } })
         await conn.sendMessage(chat, { 
-            text: `🔇 *BAN CHAT AKTIF*\n\n> Bot telah dinonaktifkan di obrolan ini oleh Owner.\n> Bot tidak akan merespons pesan apapun dari member biasa.` 
+            text: `🛑DONE` 
         })
 
     } catch (e) {

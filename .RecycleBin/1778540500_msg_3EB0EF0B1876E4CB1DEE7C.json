@@ -1,0 +1,25 @@
+{
+  "key": {
+    "remoteJid": "120363425526743588@g.us",
+    "fromMe": true,
+    "id": "3EB0EF0B1876E4CB1DEE7C"
+  },
+  "message": {
+    "extendedTextMessage": {
+      "text": "Menu *\"dowloader\"* tidak tersedia.\n\nKategori yang tersedia:\n.menu ai\n.menu main\n.menu rpg\n.menu sticker\n.menu advanced\n.menu xp\n.menu group\n.menu info\n.menu internet\n.menu islam\n.menu owner\n.menu voice\n.menu store\n.menu tools\n.menu keuangan\n.menu order",
+      "contextInfo": {
+        "stanzaId": "A51EE63BD91D3CFCE94FE90D5CD8BA0D",
+        "participant": "221203734204662@lid",
+        "quotedMessage": {
+          "conversation": ".menu dowloader"
+        }
+      }
+    },
+    "messageContextInfo": {
+      "messageSecret": "z4j/xOyTHESbMl/gMc4qUj/Z/TSMrbEQcE9W7XrJF9w="
+    }
+  },
+  "messageTimestamp": "1778540415",
+  "status": "PENDING",
+  "participant": "6283853531950:47@s.whatsapp.net"
+}
