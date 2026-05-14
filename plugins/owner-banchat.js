@@ -8,14 +8,14 @@ let handler = async (m, { conn, args }) => {
     try {
         // Menggunakan variabel kustom 'isMuted' agar tidak diblokir sistem inti
         if (chats[chat].isMuted) {
-            return m.reply('ℹ️ Bot sudah dalam keadaan bisu di chat ini.')
+            return m.reply('Sudah')
         }
 
         chats[chat].isBanned = true
 
-        await conn.sendMessage(m.chat, { react: { text: '🔇', key: m.key } })
+        await conn.sendMessage(m.chat, { react: { text: '', key: m.key } })
         await conn.sendMessage(chat, { 
-            text: `🛑DONE` 
+            text: `Done` 
         })
 
     } catch (e) {

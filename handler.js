@@ -5,29 +5,12 @@ const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(resolve, ms))
 
 // ── [FIX LID/JID] resolveDbSender ────────────────────────────────────────────
-// Masalah: m.sender bisa berformat @lid (linked device) atau @s.whatsapp.net.
-// Jika dipakai langsung sebagai key DB, user yang sama bisa punya dua entri terpisah:
-//   - Satu saat Baileys resolve → 628xxx@s.whatsapp.net
-//   - Satu saat resolve gagal  → xxx@lid
-// Solusi: selalu normalisasi sender ke JID (@s.whatsapp.net) sebelum akses DB.
-//
-// Prioritas resolusi:
-//  1. conn.isLid cache (NodeCache di simple.js) — paling cepat, sudah diisi smsg()
-//  2. conn.getJid() async                       — fallback jika cache belum ada
-//  3. Cari entri JID yang menyimpan _lid ini    — untuk data yang sudah tersimpan sebagai LID
-//  4. Fallback ke sender asli jika semua gagal  — biarkan apa adanya, catat warning
-//
-// Jika ditemukan entri LID lama di database saat sudah ada entri JID yang valid,
-// data dari entri LID akan di-merge ke entri JID dan entri LID dihapus (de-dupe).
 async function resolveDbSender(conn, sender, users) {
-    // Bukan LID — tidak perlu resolusi
     if (!sender.endsWith('@lid')) return sender
 
-    // 1. Cek conn.isLid NodeCache (diisi oleh simple.js saat koneksi)
     const fromCache = conn.isLid?.get?.(sender)
     if (fromCache && !fromCache.endsWith('@lid')) return fromCache
 
-    // 2. Coba resolve async via conn.getJid()
     if (typeof conn.getJid === 'function') {
         try {
             const resolved = await conn.getJid(sender)
@@ -35,35 +18,26 @@ async function resolveDbSender(conn, sender, users) {
         } catch { /* lanjut ke fallback */ }
     }
 
-    // 3. Cari entri JID yang menyimpan field _lid cocok dengan sender ini
-    //    (entri yang pernah di-resolve dan menyimpan pemetaan LID-nya)
     const byStoredLid = Object.keys(users || {})
         .find(k => !k.endsWith('@lid') && users[k]?._lid === sender)
     if (byStoredLid) return byStoredLid
 
-    // 4. Semua gagal — pakai sender apa adanya dan catat warning
     console.warn(`[handler] Tidak dapat resolve LID ke JID: ${sender}`)
     return sender
 }
 
 // ── [FIX LID/JID] mergeAndCleanLidEntry ──────────────────────────────────────
-// Jika sebelumnya ada entri tersimpan dengan key @lid, tapi sekarang kita punya
-// key JID yang valid untuk user yang sama → merge data LID ke JID lalu hapus LID.
-// Merge: field dari entri JID diprioritaskan (tidak ditimpa oleh LID), kecuali
-// field numerik akumulatif (exp, command, dll) yang dijumlahkan.
 function mergeAndCleanLidEntry(users, jidKey, lidKey) {
     if (jidKey === lidKey) return
     if (!users[lidKey]) return
     if (!users[jidKey]) {
-        // Entri JID belum ada sama sekali — pindahkan entri LID ke key JID
         users[jidKey] = users[lidKey]
-        users[jidKey]._lid = lidKey // simpan LID asli sebagai referensi
+        users[jidKey]._lid = lidKey
         delete users[lidKey]
         console.log(`[handler] Pindahkan entri LID → JID: ${lidKey} → ${jidKey}`)
         return
     }
 
-    // Kedua entri ada — merge, prioritaskan JID, akumulasi field numerik
     const lid = users[lidKey]
     const jid = users[jidKey]
     const accumulativeFields = ['exp', 'command', 'commandTotal', 'chat', 'chatTotal']
@@ -72,7 +46,6 @@ function mergeAndCleanLidEntry(users, jidKey, lidKey) {
             jid[field] += lid[field]
         }
     }
-    // Simpan referensi LID di entri JID untuk keperluan audit
     jid._lid = lidKey
     delete users[lidKey]
     console.log(`[handler] Merge + hapus entri LID: ${lidKey} → ${jidKey}`)
@@ -84,6 +57,7 @@ module.exports = {
         this.msgqueque = this.msgqueque || []
 
         if (!chatUpdate) return
+
         // ── Raw Message Cache ─────────────────────────────────────────────────
         global.rawMessages = global.rawMessages || new Map()
         for (const raw of (chatUpdate.messages || [])) {
@@ -97,6 +71,7 @@ module.exports = {
                 JSON.stringify(raw, null, 2)
             )
         }
+
         if (chatUpdate.messages.length > 1) console.log(chatUpdate.messages)
         let m = chatUpdate.messages[chatUpdate.messages.length - 1]
         if (!m) return
@@ -109,26 +84,17 @@ module.exports = {
             m.limit = false
             m.token = false
 
-            // ── [FIX LID/JID] Normalisasi key DB sebelum apapun ──────────────
-            // m.sender dipertahankan apa adanya (untuk kirim pesan WhatsApp, mention, dsb.)
-            // m.dbSender adalah key yang selalu konsisten untuk operasi baca/tulis database
-            m.dbSender = await resolveDbSender(
-                this, m.sender, global.db.data.users
-            )
+            // ── [FIX LID/JID] Normalisasi key DB ─────────────────────────────
+            m.dbSender = await resolveDbSender(this, m.sender, global.db.data.users)
 
             // ── Inisialisasi DB ───────────────────────────────────────────────
             try {
-                // ── User ─────────────────────────────────────────────────────
-                // [FIX LID/JID] Selalu gunakan m.dbSender sebagai key, bukan m.sender
-                // Merge entri LID lama jika ditemukan di database
                 if (m.dbSender !== m.sender) {
                     mergeAndCleanLidEntry(global.db.data.users, m.dbSender, m.sender)
                 }
 
                 let user = global.db.data.users[m.dbSender]
                 if (typeof user !== 'object') global.db.data.users[m.dbSender] = {}
-
-                // Re-read referensi setelah kemungkinan di-reset di atas
                 user = global.db.data.users[m.dbSender]
 
                 if (user) {
@@ -175,7 +141,6 @@ module.exports = {
                         if (!isNumber(user.taxi))        user.taxi        = 0
                     }
                 } else {
-                    // [FIX LID/JID] Buat entri baru dengan key JID yang sudah dinormalisasi
                     global.db.data.users[m.dbSender] = {
                         taxi: 0, lasttaxi: 0, saldo: 0, level: 0, location: 'Gubuk',
                         pc: 0, exp: 0, limit: 100, token: 10, skata: 0, lastkerja: 0,
@@ -186,7 +151,6 @@ module.exports = {
                         premium: false, premiumTime: 0, job: 'Pengangguran',
                         role: 'Newbie ㋡', autolevelup: true,
                         command: 0, commandTotal: 0,
-                        // [FIX LID/JID] Simpan LID asli sebagai metadata audit jika berbeda
                         ...(m.dbSender !== m.sender ? { _lid: m.sender } : {})
                     }
                 }
@@ -194,7 +158,6 @@ module.exports = {
                 // ── Chat ─────────────────────────────────────────────────────
                 let chat = global.db.data.chats[m.chat]
                 if (typeof chat !== 'object') global.db.data.chats[m.chat] = {}
-
                 chat = global.db.data.chats[m.chat]
 
                 if (chat) {
@@ -227,13 +190,10 @@ module.exports = {
                     }
                 }
 
-                // ── memgc (per-member per-group stats) ───────────────────────
-                // [FIX LID/JID] Gunakan m.dbSender — sama seperti users
-                // Merge entri LID di memgc jika ada
+                // ── memgc ─────────────────────────────────────────────────────
                 if (m.isGroup && m.dbSender !== m.sender) {
                     const memgcObj = global.db.data.chats[m.chat]?.memgc
                     if (memgcObj && memgcObj[m.sender] && memgcObj[m.dbSender]) {
-                        // Kedua entri ada — akumulasi field numerik lalu hapus LID
                         const lidMemgc = memgcObj[m.sender]
                         const jidMemgc = memgcObj[m.dbSender]
                         for (const f of ['chat', 'chatTotal', 'command', 'commandTotal']) {
@@ -243,7 +203,6 @@ module.exports = {
                         }
                         delete memgcObj[m.sender]
                     } else if (memgcObj && memgcObj[m.sender] && !memgcObj[m.dbSender]) {
-                        // Hanya entri LID yang ada — pindahkan ke key JID
                         memgcObj[m.dbSender] = memgcObj[m.sender]
                         delete memgcObj[m.sender]
                     }
@@ -294,13 +253,14 @@ module.exports = {
                 if (idx !== -1) this.msgqueque.splice(idx, 1)
             }
 
-                        // ── Plugin.all (broadcast ke semua plugin) ────────────────────────
+            // ── Resolusi ban & owner (dipakai plugin.all, before, command) ────
             const _chatDb = global.db.data.chats[m.chat] || {}
             const _userDb = global.db.data.users[m.dbSender] || {}
             const _isOwnerAll = [this.user.jid, ...global.owner]
                 .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
                 .includes(m.dbSender.replace(/[^0-9]/g, '') + '@s.whatsapp.net') || m.fromMe
 
+            // ── Plugin.all ────────────────────────────────────────────────────
             for (let name in global.plugins) {
                 let plugin = global.plugins[name]
                 if (!plugin) continue
@@ -308,6 +268,7 @@ module.exports = {
                 if (!plugin.all) continue
                 if (typeof plugin.all !== 'function') continue
                 try {
+                    // [BAN GUARD] blok semua plugin.all kecuali owner
                     if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) continue
                     await plugin.all.call(this, m, chatUpdate)
                 } catch (e) {
@@ -320,12 +281,9 @@ module.exports = {
             m.exp += Math.ceil(Math.random() * 10)
 
             let usedPrefix
-            // [FIX LID/JID] _user selalu dibaca dari entri yang sudah dinormalisasi
             let _user = global.db.data?.users?.[m.dbSender]
 
             // ── Resolusi Owner ────────────────────────────────────────────────
-            // [FIX LID/JID] Gunakan m.dbSender untuk perbandingan owner
-            // agar owner yang login via linked device (LID) tetap dikenali
             let isROwner = [this.user.jid, ...global.owner]
                 .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
                 .includes(m.dbSender.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
@@ -335,7 +293,6 @@ module.exports = {
                 .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
                 .includes(m.dbSender)
 
-            // [FIX LID/JID] Baca premium dari entri yang sudah dinormalisasi
             let isPrems = isROwner || (
                 global.db.data.users[m.dbSender]?.premiumTime > 0 ||
                 global.db.data.users[m.dbSender]?.premium
@@ -347,8 +304,6 @@ module.exports = {
                 : {}) || {}
             const participants = (m.isGroup ? groupMetadata.participants : []) || []
 
-            // [FIX LID/JID] Cari participant dengan m.sender (JID asli dari pesan)
-            // karena groupMetadata.participants menggunakan JID dari Baileys, bukan dbSender
             const user = participants.find(u =>
                 (u.jid || u.phoneNumber || u.id) === m.sender ||
                 (u.jid || u.phoneNumber || u.id) === m.dbSender
@@ -361,7 +316,7 @@ module.exports = {
             const isAdmin    = isRAdmin || user?.admin === 'admin' || false
             const isBotAdmin = bot?.admin === 'admin' || bot?.admin === 'superadmin' || false
 
-            // ── Plugin loop (command matching) ────────────────────────────────
+            // ── Plugin loop ───────────────────────────────────────────────────
             for (let name in global.plugins) {
                 let plugin = global.plugins[name]
                 if (!plugin) continue
@@ -388,8 +343,19 @@ module.exports = {
                             : [[[], new RegExp]]
                 ).find(p => p[1])
 
+                // [BAN GUARD] plugin.before TANPA prefix (guard plugin seperti _banchat-guard, _AI-tag, dll)
+                // Harus dicek SEBELUM `if (!match) continue` agar tidak lolos
+                if (typeof plugin.before === 'function' && !match) {
+                    if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) continue
+                    if (await plugin.before.call(this, m, {
+                        match, conn: this, participants, groupMetadata,
+                        user, bot, isROwner, isOwner, isAdmin, isBotAdmin, isPrems, chatUpdate,
+                    })) continue
+                }
+
                 if (!match) continue
 
+                // [BAN GUARD] plugin.before DENGAN prefix
                 if (typeof plugin.before === 'function') {
                     if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) continue
                     if (await plugin.before.call(this, m, {
@@ -421,14 +387,14 @@ module.exports = {
                     if (!isAccept) continue
                     m.plugin = name
 
-                    // [FIX LID/JID] Semua akses DB di blok ini pakai m.dbSender
                     if (m.chat in global.db.data.chats || m.dbSender in global.db.data.users) {
                         let chatDb = global.db.data.chats[m.chat]
                         let userDb = global.db.data.users[m.dbSender]
 
+                        // [BAN GUARD] command loop — owner bypass semua ban
                         const bypassList = ['group-modebot.js', 'owner-unbanchat.js', 'owner-exec.js', 'owner-exec2.js', 'tool-delete.js']
                         if (!isOwner && !bypassList.includes(name) && (chatDb?.isBanned || chatDb?.mute)) continue
-                        if (!isOwner && name !== 'unbanuser.js' && userDb && userDb.banned) continue
+                        if (!isOwner && name !== 'owner-unbanuser.js' && userDb && userDb.banned) continue
 
                         if (m.isGroup && chatDb?.memgc?.[m.dbSender]) {
                             chatDb.memgc[m.dbSender].command++
@@ -486,7 +452,6 @@ module.exports = {
                     if (xp > 200) m.reply('Ngecit -_-')
                     else m.exp += xp
 
-                    // [FIX LID/JID] Cek limit & token dari entri yang dinormalisasi
                     if (!isPrems && plugin.limit && global.db.data.users[m.dbSender]?.limit < plugin.limit * 1) {
                         this.reply(m.chat, `Limit anda habis, silahkan beli melalui *${usedPrefix}buy* atau beli di *${usedPrefix}shop*`, m)
                         continue
@@ -553,7 +518,6 @@ module.exports = {
             const opts = global.opts
             let user, stats = global.db.data.stats
             if (m) {
-                // [FIX LID/JID] Akumulasi exp/limit/token ke entri yang dinormalisasi
                 const key = m.dbSender || m.sender
                 if (key && (user = global.db.data.users[key])) {
                     user.exp   += m.exp
@@ -564,61 +528,76 @@ module.exports = {
             try {
                 require('./lib/print')(m, this)
             } catch (e) {
-                // silent — print error tidak boleh crash handler
+                // silent
             }
             if (opts['autoread']) await this.readMessages([m.key]).catch(() => {})
         }
     },
 
-    async participantsUpdate({ id, participants, action }) {
+        async participantsUpdate({ id, participants, action }) {
         try {
-            const opts = global.opts
-            if (opts['self']) return
+            const opts = global.opts || {}
+
+            // 1. Mode self → diam total
+            if (opts['self']) {
+                console.log('[WELCOME] BOT SELF MODE — tidak kirim welcome/bye')
+                return
+            }
+
             if (global.isInit) return
 
-            let chat = global.db.data?.chats?.[id] || {}
-            let text = ''
+            const chat = global.db.data?.chats?.[id] || {}
 
-            switch (action) {
-                case 'add':
-                case 'remove':
-                case 'leave':
-                case 'invite':
-                case 'invite_v4':
-                    if (chat.welcome && !chat.isBanned) {
-                        let groupMetadata = await this.groupMetadata(id).catch(() => null)
-                        if (!groupMetadata) break
+            // 2. Grup di-ban atau mute → diam
+            if (chat.isBanned || chat.mute) {
+                console.log(`[WELCOME] Grup ${id} isBanned=${chat.isBanned} mute=${chat.mute} — skip`)
+                return
+            }
 
-                        for (let user of participants) {
-                            let jid = user
-                            if (typeof user === 'object') {
-                                jid = user.phoneNumber || user.id || user.jid || user
-                            }
-                            if (!jid || (!jid.includes('@s.whatsapp.net') && !jid.includes('@lid'))) continue
+            // 3. Welcome dimatikan → diam
+            if (!chat.welcome) {
+                console.log(`[WELCOME] welcome=false untuk ${id}`)
+                return
+            }
 
-                            let pp = 'https://telegra.ph/file/70e8de9b1879568954f09.jpg'
-                            try { pp = await this.profilePictureUrl(jid, 'image') } catch {}
+            // Hanya proses aksi yang relevan
+            const validActions = ['add', 'remove', 'leave', 'invite', 'invite_v4']
+            if (!validActions.includes(action)) return
 
-                            const isAdd = ['add', 'invite', 'invite_v4'].includes(action)
+            const groupMetadata = await this.groupMetadata(id).catch(() => null)
+            if (!groupMetadata) return
 
-                            let fallbackWelcome = this.welcome || 'Welcome, @user!'
-                            let fallbackBye     = this.bye     || 'Bye, @user!'
+            const isAdd = ['add', 'invite', 'invite_v4'].includes(action)
 
-                            text = (isAdd
-                                ? (chat.sWelcome || fallbackWelcome)
-                                : (chat.sBye     || fallbackBye))
-                                .replace('@subject', groupMetadata.subject || 'this group')
-                                .replace('@desc',    groupMetadata.desc?.toString() || '')
-                                .replace('@user',    '@' + jid.replace(/@.+/, ''))
+            for (let user of participants) {
+                let jid = typeof user === 'object' ? (user.phoneNumber || user.id || user.jid || user) : user
+                if (!jid || (!jid.includes('@s.whatsapp.net') && !jid.includes('@lid'))) continue
 
-                            await this.sendMessage(id, {
-                                text,
-                                mentions: [jid],
-                                contextInfo: { mentionedJid: [jid] }
-                            }).catch(e => console.log('Gagal kirim welcome:', e))
-                        }
-                    }
-                    break
+                // 4. User yang dibanned tidak disambut
+                const userDb = global.db.data.users?.[jid]
+                if (userDb?.banned) {
+                    console.log(`[WELCOME] User ${jid} banned — skip`)
+                    continue
+                }
+
+                let pp = 'https://telegra.ph/file/70e8de9b1879568954f09.jpg'
+                try { pp = await this.profilePictureUrl(jid, 'image') } catch {}
+
+                const fallbackWelcome = this.welcome || 'Welcome, @user!'
+                const fallbackBye     = this.bye     || 'Bye, @user!'
+
+                let text = (isAdd
+                    ? (chat.sWelcome || fallbackWelcome)
+                    : (chat.sBye     || fallbackBye))
+                    .replace('@subject', groupMetadata.subject || 'this group')
+                    .replace('@desc',    groupMetadata.desc?.toString() || '')
+                    .replace('@user',    '@' + jid.replace(/@.+/, ''))
+
+                await this.sendMessage(id, {
+                    text,
+                    mentions: [jid],
+                    contextInfo: { mentionedJid: [jid] }
+                }).catch(e => console.error('[WELCOME] Gagal kirim:', e))
             }
         } catch (err) {
             console.error('Error participantsUpdate:', err)
@@ -640,6 +619,8 @@ module.exports = {
             if (!msg) return
 
             let chat = global.db.data.chats[msg.key.remoteJid] || {}
+            // [BAN GUARD] jangan kirim anti-delete di grup banned
+            if (chat.isBanned) return
             if (chat.delete) return
 
             let participantId = participant || msg.key.participant || msg.key.remoteJid
