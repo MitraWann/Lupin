@@ -1,263 +1,170 @@
-process.env.TZ = 'Asia/Makassar'
-let fs      = require('fs')
-let path    = require('path')
-let moment  = require('moment-timezone')
-let levelling = require('../lib/levelling')
+const crypto = require('crypto');
+const { prepareWAMessageMedia } = require('@whiskeysockets/baileys');
 
-// ── [FIX] Peta emoji untuk tag yang sudah dikenal ────────────────────────────
-// Tag yang tidak ada di sini akan tetap muncul di menu dengan label auto-generate:
-//   "📌 MENU NAMATAG" — tidak perlu edit kode saat ada plugin baru.
-// Untuk kustomisasi emoji tag baru, cukup tambahkan entri di sini.
-const knownTagLabels = {
-    'all':        '🗂️ MENU ALL',
-    'tulipnex':   '📊 TULIPNEX (CBE)',
-    'efootball':  '⚽ eFootball',
-    'ai':         '🤖 MENU AI',
-    'main':       '🏠 MENU UTAMA',
-    'downloader': '📥 MENU DOWNLOADER',
-    'database':   '📂 MENU DATABASE',
-    'rpg':        '⚔️ MENU RPG',
-    'sticker':    '🎨 MENU CONVERT',
-    'advanced':   '⚙️ ADVANCED',
-    'xp':         '✨ MENU EXP',
-    'fun':        '🎡 MENU FUN',
-    'game':       '🎮 MENU GAME',
-    'github':     '💻 MENU GITHUB',
-    'group':      '👥 MENU GROUP',
-    'info':       '📑 MENU INFO',
-    'internet':   '🌐 INTERNET',
-    'islam':      '🕌 MENU ISLAMI',
-    'maker':      '🏗️ MENU MAKER',
-    'news':       '📰 MENU NEWS',
-    'owner':      '👑 MENU OWNER',
-    'voice':      '🎙️ PENGUBAH SUARA',
-    'store':      '🛒 MENU STORE',
-    'stalk':      '🕵️ MENU STALK',
-    'shortlink':  '🔗 SHORT LINK',
-    'tools':      '🧰 MENU TOOLS',
-    'anonymous':  '🎭 ANONYMOUS CHAT',
+// Cache global
+const _mediaCache = {
+    data: null,
+    ts: 0,
+    TTL: 6 * 60 * 60 * 1000 // 6 jam
+};
+
+const thumbUrl = 'https://files.catbox.moe/vaq8z9.png';
+const favUrl = 'https://files.catbox.moe/kkz2tk.png';
+const link = 'https://flora.baik';
+
+async function getMediaCache(conn) {
+    const now = Date.now();
+    if (_mediaCache.data && (now - _mediaCache.ts) < _mediaCache.TTL) {
+        return _mediaCache.data;
+    }
+    const thumbBuffer = await conn.getFile(thumbUrl).then(f => f.data);
+    const favBuffer = await conn.getFile(favUrl).then(f => f.data);
+    const [thumbWAMC, favWAMC] = await Promise.all([
+        prepareWAMessageMedia({ image: thumbBuffer }, {
+            upload: conn.waUploadToServer,
+            mediaTypeOverride: 'thumbnail-link'
+        }),
+        prepareWAMessageMedia({ image: favBuffer }, {
+            upload: conn.waUploadToServer,
+            mediaTypeOverride: 'thumbnail-link'
+        })
+    ]);
+    _mediaCache.data = {
+        th: thumbWAMC.imageMessage,
+        fv: favWAMC.imageMessage
+    };
+    _mediaCache.ts = now;
+    return _mediaCache.data;
 }
 
-// Tag yang tidak pernah ditampilkan ke user biasa
-const hiddenCategories = ['god', 'asisten']
-
-// ── [BARU] Auto-detect tags dari semua plugin yang aktif ─────────────────────
-// Menggantikan arrayMenu & allTags yang sebelumnya hardcoded.
-// Urutan: tag dikenal (sesuai knownTagLabels) → tag baru (alfabetis)
-// Tag hidden dan tag tanpa nama ('') difilter otomatis.
-function buildTagMap() {
-    const detected = new Set()
-
-    for (const plugin of Object.values(global.plugins || {})) {
-        if (!plugin || plugin.disabled) continue
-        const tags = Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags]
-        for (const tag of tags) {
-            if (tag && typeof tag === 'string' && tag.trim()) {
-                detected.add(tag.trim())
+async function sendMenu(conn, chat, title, description, text) {
+    const { th, fv } = await getMediaCache(conn);
+    await conn.relayMessage(chat, {
+        messageContextInfo: {
+            messageSecret: crypto.randomBytes(32)
+        },
+        extendedTextMessage: {
+            text: `${link}\n${text}`,
+            matchedText: link,
+            canonicalUrl: link,
+            title,
+            description,
+            previewType: 0,
+            jpegThumbnail: th.jpegThumbnail,
+            thumbnailDirectPath: th.directPath,
+            thumbnailSha256: th.fileSha256,
+            thumbnailEncSha256: th.fileEncSha256,
+            mediaKey: th.mediaKey,
+            mediaKeyTimestamp: Number(th.mediaKeyTimestamp),
+            thumbnailWidth: th.width || 512,
+            thumbnailHeight: th.height || 512,
+            inviteLinkGroupTypeV2: 0,
+            faviconMMSMetadata: {
+                thumbnailDirectPath: fv.directPath,
+                thumbnailSha256: fv.fileSha256,
+                thumbnailEncSha256: fv.fileEncSha256,
+                mediaKey: fv.mediaKey,
+                mediaKeyTimestamp: Number(fv.mediaKeyTimestamp),
+                thumbnailHeight: Math.min(fv.height || 96, 96),
+                thumbnailWidth: Math.min(fv.width || 96, 96)
             }
         }
-    }
-
-    const tagMap = {}
-
-    // 1. Selalu sertakan 'all' di posisi pertama
-    tagMap['all'] = knownTagLabels['all']
-
-    // 2. Tag dikenal, dalam urutan knownTagLabels, hanya jika ada plugin-nya
-    for (const [tag, label] of Object.entries(knownTagLabels)) {
-        if (tag === 'all') continue
-        if (hiddenCategories.includes(tag)) continue
-        if (detected.has(tag)) tagMap[tag] = label
-    }
-
-    // 3. Tag baru yang tidak ada di knownTagLabels (plugin baru ditambahkan)
-    for (const tag of [...detected].sort()) {
-        if (tag in tagMap) continue
-        if (hiddenCategories.includes(tag)) continue
-        // Auto-generate label dengan emoji default
-        tagMap[tag] = `📌 MENU ${tag.toUpperCase()}`
-    }
-
-    return tagMap
+    }, {});
 }
 
-const defaultMenu = {
-    before: `
-Halo %name 👋,
-Selamat datang di pusat kontrol.
-
-*S T A T U S  S Y S T E M*
- ⚬ *Waktu* : %time WITA
- ⚬ *Tanggal* : %date
- ⚬ *Prefix* : [ %p ]
-`.trimStart(),
-    header: '\n*%category*',
-    body:   '  ● %cmd %islimit %isPremium',
-    footer: '',
-    after:  `\n> *Hint:* Ketik *%pmenu <kategori>* untuk membuka menu.\n\n> Contoh: *%pmenu main*`
-}
-
-let handler = async (m, { conn, usedPrefix: _p, args = [], command, isOwner }) => {
-    try {
-        // [FIX] Gunakan m.dbSender (sudah dinormalisasi dari LID) untuk akses DB
-        // m.sender boleh masih @lid jika dari linked device
-        let dbKey = m.dbSender || m.sender
-        let { exp, limit, level, role } = global.db.data.users[dbKey] || {}
-
-        let name = `@${m.sender.split('@')[0]}`
-        let teks = (args[0] || '').toLowerCase().trim()
-
-        // [FIX] new Date(new Date + 3600000) — `new Date` tanpa () menghasilkan string
-        // bukan timestamp, sehingga aritmatika string + number = NaN → tanggal Invalid.
-        // Fix: gunakan Date.now() yang selalu menghasilkan number.
-        let d      = new Date(Date.now() + 3600000)
-        let locale = 'id'
-        let date   = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
-        let time   = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric', second: 'numeric' })
-
-        let _uptime = process.uptime() * 1000
-        let uptime  = clockString(_uptime)
-
-        // [BARU] Bangun tagMap secara dinamis dari plugin yang aktif
-        const allTags  = buildTagMap()
-        const arrayMenu = Object.keys(allTags)
-
-        let help = Object.values(global.plugins).filter(p => !p?.disabled).map(plugin => ({
-            help:    Array.isArray(plugin.help)    ? plugin.help    : [plugin.help],
-            tags:    Array.isArray(plugin.tags)    ? plugin.tags    : [plugin.tags],
-            prefix:  'customPrefix' in plugin,
-            limit:   plugin.limit,
-            premium: plugin.premium,
-            owner:   plugin.owner || plugin.rowner,
-            enabled: !plugin.disabled,
-        }))
-
-        // Blokir user jika mencoba akses kategori tersembunyi
-        if (hiddenCategories.includes(teks) && !isOwner) {
-            return m.reply(`Menu "${teks}" tidak tersedia.\nSilakan ketik ${_p}menu untuk melihat daftar menu.`)
-        }
-
-        // Helper: render daftar command untuk satu tag
-        const renderCommands = (tag) => {
-            let cmds = []
-            for (let menu of help) {
-                if (!menu.tags?.includes(tag) || !menu.help) continue
-                for (let helpItem of menu.help) {
-                    if (!helpItem) continue
-                    cmds.push({
-                        name: helpItem,
-                        str: defaultMenu.body
-                            .replace(/%cmd/g,       menu.prefix ? helpItem : _p + helpItem)
-                            .replace(/%islimit/g,   menu.limit   ? ' Ⓛ' : '')
-                            .replace(/%isPremium/g, menu.premium ? ' Ⓟ' : '')
-                    })
+function getCategorized() {
+    const categorized = {};
+    for (const name in global.plugins) {
+        const plugin = global.plugins[name];
+        if (plugin && Array.isArray(plugin.help) && plugin.help.length > 0) {
+            const tag = (Array.isArray(plugin.tags) && plugin.tags[0]) ? plugin.tags[0].toLowerCase() : 'other';
+            if (!categorized[tag]) categorized[tag] = [];
+            for (const cmd of plugin.help) {
+                const cleanCmd = cmd.trim();
+                if (cleanCmd && !categorized[tag].includes(cleanCmd)) {
+                    categorized[tag].push(cleanCmd);
                 }
             }
-            cmds.sort((a, b) => String(a.name).localeCompare(String(b.name)))
-            return cmds.map(c => c.str).join('\n')
         }
-
-        let text = ''
-
-        if (!teks) {
-            // ── Tampilan daftar kategori ──────────────────────────────────
-            let menuList = `${defaultMenu.before}\n\n*A V A I L A B L E   M E N U S*\n`
-            for (let tag of arrayMenu) {
-                if (tag && tag !== 'all' && !hiddenCategories.includes(tag)) {
-                    menuList += `  ● ${_p}menu ${tag}\n`
-                }
-            }
-            menuList += `\n${defaultMenu.after}`
-            text = menuList
-
-        } else if (teks === 'all') {
-            // ── Tampilan semua kategori sekaligus ─────────────────────────
-            text = defaultMenu.before + '\n'
-            for (let tag of arrayMenu) {
-                if (tag === 'all' || hiddenCategories.includes(tag)) continue
-                const cmds = renderCommands(tag)
-                if (!cmds) continue // skip tag yang tidak punya command aktif
-                text += defaultMenu.header.replace(/%category/g, allTags[tag]) + '\n'
-                text += cmds + '\n'
-                if (defaultMenu.footer) text += defaultMenu.footer + '\n'
-            }
-            text += defaultMenu.after
-
-        } else if (allTags[teks]) {
-            // ── Tampilan satu kategori ────────────────────────────────────
-            text = defaultMenu.before + '\n'
-            text += defaultMenu.header.replace(/%category/g, allTags[teks]) + '\n'
-            text += renderCommands(teks) + '\n'
-            if (defaultMenu.footer) text += defaultMenu.footer + '\n'
-            text += defaultMenu.after
-
-        } else {
-            // ── Tag tidak ditemukan ───────────────────────────────────────
-            // [BARU] Tampilkan saran tag yang tersedia agar user tidak bingung
-            const availableTags = arrayMenu
-                .filter(t => t && t !== 'all' && !hiddenCategories.includes(t))
-                .map(t => `${_p}menu ${t}`)
-                .join('\n')
-            return m.reply(
-                `Menu *"${teks}"* tidak tersedia.\n\nKategori yang tersedia:\n${availableTags}`
-            )
-        }
-
-        // ── Substitusi variabel template ──────────────────────────────────
-        let replace = { '%': '%', p: _p, uptime, name, date, time, pmenu: _p + 'menu' }
-        text = text.replace(
-            new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join('|')})`, 'g'),
-            (_, key) => '' + replace[key]
-        )
-
-        // ── Kirim via relayMessage dengan Rich UI ─────────────────────────
-        const newsletterName = teks
-            ? `DASHBOARD ${(allTags[teks] || teks).replace(/[^\x00-\x7F]/g, '').trim().toUpperCase()}`
-            : 'DASHBOARD'
-
-        await conn.relayMessage(m.chat, {
-            extendedTextMessage: {
-                text,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid:     '120363407187309269@newsletter',
-                        newsletterName,
-                        serverMessageId:   127
-                    },
-                    mentionedJid: [m.sender],
-                    externalAdReply: {
-                        title:                  global.botname,
-                        body:                   'Powered by TulipNex',
-                        mediaType:              1,
-                        previewType:            0,
-                        renderLargerThumbnail:  true,
-                        thumbnailUrl:           'https://files.catbox.moe/stkbn0.png',
-                        sourceUrl:              ''
-                    }
-                },
-                mentions: [m.sender]
-            }
-        }, {})
-
-    } catch (e) {
-        conn.reply(m.chat, 'Maaf, menu sedang error', m)
-        console.error(e)
     }
+    for (const tag in categorized) {
+        categorized[tag].sort((a, b) => a.localeCompare(b));
+    }
+    return categorized;
 }
 
-handler.help    = ['menu']
-handler.tags    = ['main']
-handler.command = /^(menu|help)$/i
-handler.exp     = 3
-
-module.exports = handler
-
-function clockString(ms) {
-    if (isNaN(ms)) return '--'
-    let h = Math.floor(ms / 3600000)
-    let m = Math.floor(ms / 60000) % 60
-    let s = Math.floor(ms / 1000) % 60
-    return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
+function getSortedTags(categorized) {
+    return Object.keys(categorized).sort((a, b) => {
+        if (a === 'main') return -1;
+        if (b === 'main') return 1;
+        if (a === 'other') return 1;
+        if (b === 'other') return -1;
+        return a.localeCompare(b);
+    });
 }
+
+function buildCategoryList(categorized, sortedTags) {
+    let text = '```~$ list --menu\n\n';
+    let index = 1;
+    for (const tag of sortedTags) {
+        const count = categorized[tag].length;
+        text += `→ ${tag} [${count}]\n`;
+        index++;
+    }
+    const total = Object.values(categorized).reduce((a, b) => a + b.length, 0);
+    text += `\n────────────────\n${total} commands\n.menu <kategori>\n.menu all\n\`\`\``;
+    return text;
+}
+
+function buildSingleCategory(tag, cmds) {
+    let text = `\`\`\`~$ list --${tag}\n\n→ ${tag}\n`;
+    for (const cmd of cmds) {
+        text += `  • ${cmd}\n`;
+    }
+    text += `\n────────────────\n${cmds.length} commands\n.help <command>\n\`\`\``;
+    return text;
+}
+
+function buildAllCategories(categorized, sortedTags) {
+    let text = '```~$ list --all\n\n';
+    for (const tag of sortedTags) {
+        const cmds = categorized[tag];
+        text += `→ ${tag}\n`;
+        for (const cmd of cmds) {
+            text += `  • ${cmd}\n`;
+        }
+        text += '\n';
+    }
+    const total = Object.values(categorized).reduce((a, b) => a + b.length, 0);
+    text += `────────────────\n${total} commands\n.help <command>\n\`\`\``;
+    return text;
+}
+
+let handler = async (m, { conn }) => {
+    const arg = m.text.trim().split(' ').slice(1).join(' ').toLowerCase().trim();
+    const categorized = getCategorized();
+    const sortedTags = getSortedTags(categorized);
+
+    if (!arg) {
+        const text = buildCategoryList(categorized, sortedTags);
+        return sendMenu(conn, m.chat, 'Flora Bot', 'Pilih kategori menu', text);
+    }
+
+    if (arg === 'all') {
+        const text = buildAllCategories(categorized, sortedTags);
+        return sendMenu(conn, m.chat, 'Flora Bot — All Commands', 'Semua perintah tersedia', text);
+    }
+
+    if (!categorized[arg]) {
+        return m.reply(`Kategori *${arg}* tidak ditemukan.\nKategori tersedia: ${sortedTags.join(', ')}`);
+    }
+
+    const text = buildSingleCategory(arg, categorized[arg]);
+    return sendMenu(conn, m.chat, `Flora — ${arg.toUpperCase()}`, `${categorized[arg].length} perintah tersedia`, text);
+};
+
+handler.help = ['menu'];
+handler.tags = ['main'];
+handler.command = /^menu(?:\s+(.+))?$/i;
+
+module.exports = handler; 

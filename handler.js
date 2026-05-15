@@ -80,9 +80,10 @@ module.exports = {
             m = (await simple.smsg(this, m)) || m
             if (!m) return
 
-            m.exp   = 0
-            m.limit = false
-            m.token = false
+            m.exp            = 0
+            m.limit          = false
+            m.token          = false
+            m._skipAutoread  = false
 
             // ── [FIX LID/JID] Normalisasi key DB ─────────────────────────────
             m.dbSender = await resolveDbSender(this, m.sender, global.db.data.users)
@@ -123,7 +124,7 @@ module.exports = {
                     if (!isNumber(user.lastngojek))   user.lastngojek  = 0
                     if (!isNumber(user.lastseen))     user.lastseen    = 0
                     if (!('registered' in user))      user.registered  = false
-                    if (!isNumber(user.command))      user.command      = 0
+                    if (!isNumber(user.command))      user.command     = 0
                     if (!isNumber(user.commandTotal)) user.commandTotal = 0
 
                     if (!user.registered) {
@@ -217,14 +218,14 @@ module.exports = {
                 }
 
                 if (memgc) {
-                    if (!('blacklist' in memgc))        memgc.blacklist     = false
-                    if (!('banned' in memgc))           memgc.banned        = false
-                    if (!isNumber(memgc.bannedTime))    memgc.bannedTime    = 0
-                    if (!isNumber(memgc.chat))          memgc.chat          = 0
-                    if (!isNumber(memgc.chatTotal))     memgc.chatTotal     = 0
-                    if (!isNumber(memgc.command))       memgc.command       = 0
-                    if (!isNumber(memgc.commandTotal))  memgc.commandTotal  = 0
-                    if (!isNumber(memgc.lastseen))      memgc.lastseen      = 0
+                    if (!('blacklist' in memgc))        memgc.blacklist    = false
+                    if (!('banned' in memgc))           memgc.banned       = false
+                    if (!isNumber(memgc.bannedTime))    memgc.bannedTime   = 0
+                    if (!isNumber(memgc.chat))          memgc.chat         = 0
+                    if (!isNumber(memgc.chatTotal))     memgc.chatTotal    = 0
+                    if (!isNumber(memgc.command))       memgc.command      = 0
+                    if (!isNumber(memgc.commandTotal))  memgc.commandTotal = 0
+                    if (!isNumber(memgc.lastseen))      memgc.lastseen     = 0
                 } else {
                     global.db.data.chats[m.chat].memgc[m.dbSender] = {
                         blacklist: false, banned: false, bannedTime: 0,
@@ -238,7 +239,12 @@ module.exports = {
             // ── Filter opts ───────────────────────────────────────────────────
             const opts = global.opts
             if (opts['nyimak']) return
-            if (!m.fromMe && opts['self']) return
+            if (opts['self']) {
+                const _selfAllowed = m.fromMe || [this.user?.jid, ...global.owner]
+                    .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
+                    .includes(m.dbSender?.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
+                if (!_selfAllowed) { m._skipAutoread = true; return }
+            }
             if (opts['pconly'] && m.chat.endsWith('g.us')) return
             if (opts['gconly'] && !m.chat.endsWith('g.us')) return
             if (opts['swonly'] && m.chat !== 'status@broadcast') return
@@ -253,12 +259,25 @@ module.exports = {
                 if (idx !== -1) this.msgqueque.splice(idx, 1)
             }
 
+            // ── Auto-unban expiry ─────────────────────────────────────────────
+            const _expUser = global.db.data.users[m.dbSender]
+            if (_expUser?.banned && _expUser.bannedTime > 0 && Date.now() >= _expUser.bannedTime) {
+                _expUser.banned = false
+                _expUser.bannedTime = 0
+            }
+
             // ── Resolusi ban & owner (dipakai plugin.all, before, command) ────
             const _chatDb = global.db.data.chats[m.chat] || {}
             const _userDb = global.db.data.users[m.dbSender] || {}
             const _isOwnerAll = [this.user.jid, ...global.owner]
                 .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
                 .includes(m.dbSender.replace(/[^0-9]/g, '') + '@s.whatsapp.net') || m.fromMe
+
+            // ── Ban guard global: zero-out EXP & tandai skip autoread ─────────
+            if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) {
+                m.exp = 0
+                m._skipAutoread = true
+            }
 
             // ── Plugin.all ────────────────────────────────────────────────────
             for (let name in global.plugins) {
@@ -268,7 +287,6 @@ module.exports = {
                 if (!plugin.all) continue
                 if (typeof plugin.all !== 'function') continue
                 try {
-                    // [BAN GUARD] blok semua plugin.all kecuali owner
                     if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) continue
                     await plugin.all.call(this, m, chatUpdate)
                 } catch (e) {
@@ -279,6 +297,9 @@ module.exports = {
 
             if (m.id.startsWith('3EB0') || (m.id.startsWith('BAE5') && m.id.length === 16) || (m.isBaileys && m.fromMe)) return
             m.exp += Math.ceil(Math.random() * 10)
+
+            // EXP pasif tidak boleh terakumulasi untuk banned
+            if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) m.exp = 0
 
             let usedPrefix
             let _user = global.db.data?.users?.[m.dbSender]
@@ -308,7 +329,7 @@ module.exports = {
                 (u.jid || u.phoneNumber || u.id) === m.sender ||
                 (u.jid || u.phoneNumber || u.id) === m.dbSender
             ) || {}
-            const bot  = participants.find(u =>
+            const bot = participants.find(u =>
                 (u.jid || u.phoneNumber || u.id) === this.user.jid
             ) || {}
 
@@ -343,8 +364,7 @@ module.exports = {
                             : [[[], new RegExp]]
                 ).find(p => p[1])
 
-                // [BAN GUARD] plugin.before TANPA prefix (guard plugin seperti _banchat-guard, _AI-tag, dll)
-                // Harus dicek SEBELUM `if (!match) continue` agar tidak lolos
+                // [BAN GUARD] plugin.before TANPA prefix
                 if (typeof plugin.before === 'function' && !match) {
                     if (!_isOwnerAll && (_chatDb.isBanned || _userDb.banned)) continue
                     if (await plugin.before.call(this, m, {
@@ -392,9 +412,8 @@ module.exports = {
                         let userDb = global.db.data.users[m.dbSender]
 
                         // [BAN GUARD] command loop — owner bypass semua ban
-                        const bypassList = ['group-modebot.js', 'owner-unbanchat.js', 'owner-exec.js', 'owner-exec2.js', 'tool-delete.js']
-                        if (!isOwner && !bypassList.includes(name) && (chatDb?.isBanned || chatDb?.mute)) continue
-                        if (!isOwner && name !== 'owner-unbanuser.js' && userDb && userDb.banned) continue
+                        if (!isOwner && (chatDb?.isBanned || chatDb?.mute)) continue
+                        if (!isOwner && userDb?.banned) continue
 
                         if (m.isGroup && chatDb?.memgc?.[m.dbSender]) {
                             chatDb.memgc[m.dbSender].command++
@@ -409,7 +428,7 @@ module.exports = {
                         }
                     }
 
-                    // ── Permission checks ──────────────────────────────────────
+                    // ── Permission checks ─────────────────────────────────────
                     if (plugin.rowner && plugin.owner && !(isROwner || isOwner)) {
                         fail('owner', m, this); continue
                     }
@@ -516,25 +535,21 @@ module.exports = {
             console.error('Fatal Handler Error:', e)
         } finally {
             const opts = global.opts
-            let user, stats = global.db.data.stats
+            let user
             if (m) {
                 const key = m.dbSender || m.sender
-                if (key && (user = global.db.data.users[key])) {
+                if (key && (user = global.db.data.users?.[key])) {
                     user.exp   += m.exp
                     user.limit -= m.limit * 1
                     user.token -= m.token * 1
                 }
             }
-            try {
-                require('./lib/print')(m, this)
-            } catch (e) {
-                // silent
-            }
-            if (opts['autoread']) await this.readMessages([m.key]).catch(() => {})
+            try { require('./lib/print')(m, this) } catch {}
+            if (opts['autoread'] && !m?._skipAutoread) await this.readMessages([m.key]).catch(() => {})
         }
     },
 
-        async participantsUpdate({ id, participants, action }) {
+    async participantsUpdate({ id, participants, action }) {
         try {
             const opts = global.opts || {}
 
@@ -560,7 +575,6 @@ module.exports = {
                 return
             }
 
-            // Hanya proses aksi yang relevan
             const validActions = ['add', 'remove', 'leave', 'invite', 'invite_v4']
             if (!validActions.includes(action)) return
 
@@ -607,6 +621,7 @@ module.exports = {
     async delete({ remoteJid, fromMe, id, participant }) {
         try {
             if (fromMe) return
+            if (global.opts?.['self']) return
             if (!this.chats) return
 
             let chats = Object.entries(this.chats).find(([, data]) => data.messages && data.messages[id])
@@ -619,7 +634,6 @@ module.exports = {
             if (!msg) return
 
             let chat = global.db.data.chats[msg.key.remoteJid] || {}
-            // [BAN GUARD] jangan kirim anti-delete di grup banned
             if (chat.isBanned) return
             if (chat.delete) return
 

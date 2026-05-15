@@ -99,5 +99,15 @@
     "chat": "120363425526743588@g.us",
     "status": "INQUIRY",
     "createdAt": 1778543616304
+  },
+  "ORD1778872028673": {
+    "orderId": "ORD1778872028673",
+    "productId": "P003",
+    "productName": "Mixed Flower Box",
+    "price": 250000,
+    "userJid": "6285324023198@s.whatsapp.net",
+    "chat": "6285324023198@s.whatsapp.net",
+    "status": "INQUIRY",
+    "createdAt": 1778872028673
   }
 }

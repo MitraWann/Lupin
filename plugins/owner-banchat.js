@@ -7,8 +7,8 @@ let handler = async (m, { conn, args }) => {
 
     try {
         // Menggunakan variabel kustom 'isMuted' agar tidak diblokir sistem inti
-        if (chats[chat].isMuted) {
-            return m.reply('Sudah')
+        if (chats[chat].isBanned) {
+            return m.reply('Bot sudah dalam mode banned di chat ini.')
         }
 
         chats[chat].isBanned = true

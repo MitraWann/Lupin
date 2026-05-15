@@ -31,7 +31,7 @@ let handler = async (m, { conn, text }) => {
     }
 }
 
-handler.help = ['join <chat.whatsapp.com>']
+handler.help = ['join <link>']
 handler.tags = ['tools']
 handler.command = /^join$/i
 handler.premium = true
