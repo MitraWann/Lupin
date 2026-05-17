@@ -1,7 +1,8 @@
 'use strict'
 
 const crypto = require('crypto')
-const { askAichatting, toDataUrl, MODELS } = require('../lib/scrape/gpt')
+const fs = require('fs')
+const { askAichatting, toDataUrl, extractDocumentText, MODELS } = require('../lib/scrape/gpt')
 
 const DEFAULT_MODEL = 'gpt-4o-mini'
 const MAX_HISTORY = 20
@@ -56,6 +57,17 @@ const handler = async (m, { conn, text, usedPrefix }) => {
         const mime = mtype.includes('png') ? 'image/png' : 'image/jpeg'
         userContent.push({ type: 'image_url', image_url: { url: toDataUrl(buf, mime) } })
       } catch (e) {}
+    } else if (mtype.includes('document') || mtype.includes('application') || mtype.includes('text/')) {
+      try {
+        const buf = await m.quoted.download()
+        const filename = m.quoted.fileName || m.quoted.name || ''
+        const mime = m.quoted.mimetype || mtype
+        const docText = await extractDocumentText(buf, mime, filename)
+        // gabung prompt + dokumen jadi satu element
+        userContent[0].text = `${userContent[0].text}\n\n[Isi file: ${filename}]\n${docText}`
+      } catch (e) {
+        userContent.push({ type: 'text', text: `[Gagal membaca file: ${e.message}]` })
+      }
     }
   }
 
