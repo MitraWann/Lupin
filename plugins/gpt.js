@@ -1,7 +1,6 @@
 'use strict'
 
 const crypto = require('crypto')
-const fs = require('fs')
 const { askAichatting, toDataUrl, extractDocumentText, MODELS } = require('../lib/scrape/gpt')
 
 const DEFAULT_MODEL = 'gpt-4o-mini'

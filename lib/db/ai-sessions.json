@@ -1,9 +1,13 @@
 {
   "6285324023198@s.whatsapp.net": {
-    "selectedModel": "qwen",
+    "selectedModel": "gpt4o",
     "qwen": {
       "chatId": "ab209ad5-fca0-4b39-8808-4e5cc45b9604",
       "deviceId": "c1d6ba7b-7204-44e5-b981-28225ec2efb0"
+    },
+    "gpt4o": {
+      "chatId": "38add08f-c8b9-44fc-8483-427158669243",
+      "deviceId": "c3f5bc3d-55f5-46a9-af9d-52952866927e"
     }
   }
 }
