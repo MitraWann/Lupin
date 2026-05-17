@@ -48,7 +48,7 @@
       "title": 0,
       "level": 0,
       "location": "Gubuk",
-      "exp": 26026,
+      "exp": 44600,
       "pc": 0,
       "ojek": 0,
       "coin": 0,
@@ -67,8 +67,8 @@
       "lastngojek": 0,
       "lastseen": 0,
       "registered": true,
-      "command": 1122,
-      "commandTotal": 1122,
+      "command": 1928,
+      "commandTotal": 1928,
       "name": "Mitra",
       "skata": 0,
       "age": 23,
@@ -80,7 +80,7 @@
       "autolevelup": true,
       "lasttaxi": 0,
       "taxi": 0,
-      "lastCmd": 1778888529339,
+      "lastCmd": 1779015969391,
       "saldo_kas": 1000,
       "riwayatKeuangan": [
         {
@@ -799,6 +799,17 @@
           "command": 0,
           "commandTotal": 0,
           "lastseen": 0
+        },
+        "6285324023198@s.whatsapp.net": {
+          "blacklist": false,
+          "banned": false,
+          "bannedTime": 0,
+          "chat": 0,
+          "chatTotal": 0,
+          "command": 3,
+          "commandTotal": 3,
+          "lastseen": 0,
+          "lastCmd": 1778901769150
         }
       }
     },
