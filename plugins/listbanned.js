@@ -1,6 +1,6 @@
 let handler = async (m, { conn, usedPrefix }) => {
     // 1. Ambil data
-    let chats = Object.entries(global.db.data.chats).filter(chat => chat[1].isMuted)
+    let chats = Object.entries(global.db.data.chats).filter(chat => chat[1].isBanned)
     let users = Object.entries(global.db.data.users).filter(user => user[1].banned)
     
     // 2. Format Daftar Chat / Grup
@@ -37,7 +37,7 @@ let handler = async (m, { conn, usedPrefix }) => {
     teks += `_Gunakan perintah ${usedPrefix}unbanchat atau ${usedPrefix}unban untuk mencabut blokir._`
     
     // 5. Ekstrak dan Normalisasi semua JID user agar tag (@nomor) aktif secara fungsional
-    let mentions = users.map(([jid]) => jid.replace(/:\d+/, ''))
+    let mentions = users.map(([jid]) => jid.endsWith('@lid') ? jid : jid.replace(/:\d+/, ''))
 
     // 6. Kirim Pesan menggunakan struktur contextInfo (lebih stabil untuk tag di Baileys)
     conn.reply(m.chat, teks, m, { contextInfo: { mentionedJid: mentions } })

@@ -22,7 +22,10 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
 
     if (!who || who === conn.user.jid) throw '⚠️ Tag/Reply pesan target atau masukkan nomornya dengan benar.';
-    
+
+    // [FIX] Resolve LID → JID sebelum akses DB
+    if (who.endsWith('@lid')) who = (await conn.getJid(who).catch(() => null)) || who
+
     // 3. Eksekusi Durasi Waktu (Parsing Timer)
     let durationStr = args.find(v => /^[0-9]+[mhd]$/i.test(v));
     let durationMs = 0;

@@ -1,7 +1,7 @@
 'use strict'
 
 const crypto = require('crypto')
-const { askAichatting, toDataUrl, extractDocumentText, MODELS } = require('../lib/scrape/gpt')
+const { askAichatting, toDataUrl, extractDocumentText, buildDocumentMessages, MODELS } = require('../lib/scrape/gpt')
 
 const DEFAULT_MODEL = 'gpt-4o-mini'
 const MAX_HISTORY = 20
@@ -48,7 +48,37 @@ const handler = async (m, { conn, text, usedPrefix }) => {
 
   const userContent = [{ type: 'text', text: input }]
 
-  if (m.quoted && m.quoted.download) {
+  if (m.mtype) {
+    const mtype = (m.mtype || '').toLowerCase()
+    if (mtype.includes('image') || mtype.includes('sticker')) {
+      try {
+        const buf = await m.download()
+        const mime = mtype.includes('png') ? 'image/png' : 'image/jpeg'
+        userContent.push({ type: 'image_url', image_url: { url: toDataUrl(buf, mime) } })
+      } catch (e) {}
+    } else if (mtype.includes('document') || mtype.includes('application') || mtype.includes('text/')) {
+      try {
+        const buf = await m.download()
+        const filename = m.fileName || m.name || ''
+        const mime = m.mimetype || mtype
+        const docText = await extractDocumentText(buf, mime, filename)
+        const docMessages = buildDocumentMessages(docText, filename)
+        if (docMessages) {
+          userContent._docMessages = docMessages
+        } else {
+          userContent[0].text = `${userContent[0].text}\n\n[Isi file: ${filename}]\n${docText}`
+        }
+      } catch (e) {
+        userContent.push({ type: 'text', text: `[Gagal membaca file: ${e.message}]` })
+      }
+    }
+  }
+
+  if (m.quoted) {
+    if (m.quoted.text) {
+      userContent[0].text = `Teks yang direferensikan:\n"${m.quoted.text}"\n\nPertanyaan: ${userContent[0].text}`
+    }
+    if (m.quoted.download) {
     const mtype = (m.quoted.mtype || '').toLowerCase()
     if (mtype.includes('image') || mtype.includes('sticker')) {
       try {
@@ -62,11 +92,16 @@ const handler = async (m, { conn, text, usedPrefix }) => {
         const filename = m.quoted.fileName || m.quoted.name || ''
         const mime = m.quoted.mimetype || mtype
         const docText = await extractDocumentText(buf, mime, filename)
-        // gabung prompt + dokumen jadi satu element
-        userContent[0].text = `${userContent[0].text}\n\n[Isi file: ${filename}]\n${docText}`
+        const docMessages = buildDocumentMessages(docText, filename)
+        if (docMessages) {
+          userContent._docMessages = docMessages
+        } else {
+          userContent[0].text = `${userContent[0].text}\n\n[Isi file: ${filename}]\n${docText}`
+        }
       } catch (e) {
         userContent.push({ type: 'text', text: `[Gagal membaca file: ${e.message}]` })
       }
+    }
     }
   }
 

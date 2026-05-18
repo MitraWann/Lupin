@@ -1,19 +1,13 @@
 let handler = async (m, { conn, command, usedPrefix }) => {
-    let setting = global.db.data.settings[conn.user.jid]
-    if (!setting) {
-        global.db.data.settings[conn.user.jid] = {}
-        setting = global.db.data.settings[conn.user.jid]
-    }
-
     let isSelf = /self|selfmode|private-mode/i.test(command)
     let isPublic = /public/i.test(command)
 
     try {
         if (isSelf) {
-            // Menggunakan variabel kustom agar sistem inti tidak memblokir Owner
-            if (setting.modeSelfCustom) return m.reply('ℹ️ Bot sudah dalam mode *self*')
-
-            setting.modeSelfCustom = true
+            if (global.opts['self']) return m.reply('ℹ️ Bot sudah dalam mode *self*')
+            global.opts['self'] = true
+            if (!global.db.data.settings) global.db.data.settings = {}
+            global.db.data.settings.self = true
             await conn.sendMessage(m.chat, { react: { text: '🔒', key: m.key } })
             return m.reply(
                 `🔒 *ᴍᴏᴅᴇ sᴇʟꜰ ᴀᴋᴛɪꜰ*\n\n` +
@@ -25,9 +19,10 @@ let handler = async (m, { conn, command, usedPrefix }) => {
         }
 
         if (isPublic) {
-            if (!setting.modeSelfCustom) return m.reply('ℹ️ Bot sudah dalam mode *public*')
-
-            setting.modeSelfCustom = false
+            if (!global.opts['self']) return m.reply('ℹ️ Bot sudah dalam mode *public*')
+            global.opts['self'] = false
+            if (!global.db.data.settings) global.db.data.settings = {}
+            global.db.data.settings.self = false
             await conn.sendMessage(m.chat, { react: { text: '🔓', key: m.key } })
             return m.reply(
                 `🔓 *ᴍᴏᴅᴇ ᴘᴜʙʟɪᴄ ᴀᴋᴛɪꜰ*\n\n` +
@@ -35,7 +30,6 @@ let handler = async (m, { conn, command, usedPrefix }) => {
                 `_Gunakan ${usedPrefix}self untuk menutup akses_`
             )
         }
-
     } catch (error) {
         console.error('[Self Command Error]', error)
         await m.reply(`❌ Error: ${error.message}`)
@@ -45,14 +39,6 @@ let handler = async (m, { conn, command, usedPrefix }) => {
 handler.help = ['self', 'public']
 handler.tags = ['owner']
 handler.command = /^(self|selfmode|private-mode|public)$/i
-handler.owner = true 
-
-// ==========================================
-// PENYELAMATAN DARURAT (AUTO-RESCUE)
-// ==========================================
-// Ini akan otomatis mematikan gembok bawaan script yang mengunci Boss
-setTimeout(() => {
-    if (global.opts) global.opts['self'] = false;
-}, 2000);
+handler.owner = true
 
 module.exports = handler

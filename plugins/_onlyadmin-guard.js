@@ -5,39 +5,25 @@ handler.before = async function (m, { conn, isAdmin, isOwner }) {
     if (m.isBaileys || m.fromMe) return
     
     // Ambil settingan bot dari database
-    let setting = global.db.data.settings[conn.user.jid] || {}
-
-    // Deteksi apakah pesan tersebut adalah perintah bot (menggunakan awalan seperti . ! / #)
+    // [FIX] Baca dari global.opts['self'] — sinkron dengan handler.js dan self.js
     let isCommand = m.text && /^[./!#]/.test(m.text)
-
-    // Jika bukan perintah (chat biasa), biarkan lewat
     if (!isCommand) return
 
-    // ==========================================
-    // 1. BLOKIR DI DALAM GRUP (OnlyAdmin / PublicAdmin)
-    // ==========================================
-    if (m.isGroup && setting.onlyAdmin) {
-        // Jika dia BUKAN admin grup dan BUKAN owner bot
-        if (!isAdmin && !isOwner) {
-            // Hapus isi teks perintahnya agar tidak bisa dibaca oleh sistem plugin
-            m.text = '' 
-            
-            // Opsional: Kirim notifikasi penolakan (Hapus tanda // di bawah jika ingin bot membalas)
-            // await m.reply('⚠️ *Akses Ditolak!*\n\nBot sedang dalam mode *OnlyAdmin*. Hanya Admin grup yang dapat menggunakan bot ini.')
-            
-            return true // Hentikan eksekusi kode bot lebih lanjut
-        }
+    // Self mode aktif — blokir semua non-owner di grup maupun PC
+    if (global.opts['self'] && !isOwner) {
+        m.text = ''
+        return true
     }
 
-    // ==========================================
-    // 2. BLOKIR DI PRIVATE CHAT (SelfAdmin)
-    // ==========================================
-    // Jika SelfAdmin aktif, orang lain (bukan owner) tidak bisa chat bot di PC
-    if (!m.isGroup && setting.onlyAdmin && setting.selfAdmin) {
-        if (!isOwner) {
-            m.text = ''
-            return true
-        }
+    // OnlyAdmin mode — baca dari settings DB
+    let setting = global.db.data.settings?.[conn.user.jid] || {}
+    if (m.isGroup && setting.onlyAdmin && !isAdmin && !isOwner) {
+        m.text = ''
+        return true
+    }
+    if (!m.isGroup && setting.onlyAdmin && setting.selfAdmin && !isOwner) {
+        m.text = ''
+        return true
     }
 }
 

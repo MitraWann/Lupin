@@ -19,7 +19,10 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
 
     if (!who || who === conn.user.jid) throw '⚠️ Tag/Reply pesan target atau masukkan nomornya dengan benar.';
-    
+
+    // [FIX] Resolve LID → JID sebelum akses DB
+    if (who.endsWith('@lid')) who = (await conn.getJid(who).catch(() => null)) || who
+
     // 3. Memeriksa Database
     let users = global.db.data.users;
     if (!users[who]) throw '❌ Target tidak ditemukan di database bot.';

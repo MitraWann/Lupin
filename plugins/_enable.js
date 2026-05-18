@@ -1,7 +1,7 @@
 let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isROwner }) => {
   let isEnable = /true|enable|(turn)?on|1/i.test(command);
   let chat = global.db.data.chats[m.chat];
-  let user = global.db.data.users[m.sender];
+  let user = global.db.data.users[m.dbSender];
   let type = (args[0] || "").toLowerCase();
   let isAll = false;
   let isUser = false;
@@ -94,6 +94,8 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
         throw false;
       }
       global.opts["self"] = !isEnable;
+      if (!global.db.data.settings) global.db.data.settings = {}
+      global.db.data.settings.self = !isEnable;
       break;
     case "antilink":
       if (m.isGroup) {

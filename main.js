@@ -122,11 +122,12 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
         global.db.READ = false;
 
         global.db.data = {
-            users:   {},
-            chats:   {},
-            stats:   {},
-            msgs:    {},
-            sticker: {},
+            users:    {},
+            chats:    {},
+            stats:    {},
+            msgs:     {},
+            sticker:  {},
+            settings: {},
             ...global.db.data || {}
         };
         global.db.chain = lodash.chain(global.db.data);
@@ -344,12 +345,12 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
             // Bersihkan listener lama
             if (global.conn.handler)           global.conn.ev.off('messages.upsert',         global.conn.handler);
             if (global.conn.participantsUpdate) global.conn.ev.off('group-participants.update', global.conn.participantsUpdate);
-            if (global.conn.onDelete)          global.conn.ev.off('message.delete',           global.conn.onDelete);
+            if (global.conn.onDelete)          global.conn.ev.off('messages.update',          global.conn.onDelete);
             if (global.conn.pollHandler)       global.conn.ev.off('messages.update',          global.conn.pollHandler);
 
             const fnHandler      = handler?.handler             || handler?.default?.handler;
             const fnParticipants = handler?.participantsUpdate  || handler?.default?.participantsUpdate;
-            const fnDelete       = handler?.onDelete            || handler?.default?.onDelete;
+            const fnDelete       = handler?.onMessagesUpdate    || handler?.default?.onMessagesUpdate;
 
             if (typeof fnHandler === 'function') {
                 global.conn.handler = fnHandler.bind(global.conn);
@@ -373,13 +374,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
 
             if (typeof fnDelete === 'function') {
                 global.conn.onDelete = fnDelete.bind(global.conn);
-                global.conn.ev.on('message.delete', global.conn.onDelete);
-            }
-
-            const fnPollUpdate = handler?.pollUpdate || handler?.default?.pollUpdate;
-            if (typeof fnPollUpdate === 'function') {
-                global.conn.pollHandler = fnPollUpdate.bind(global.conn);
-                global.conn.ev.on('messages.update', global.conn.pollHandler);
+                global.conn.ev.on('messages.update', global.conn.onDelete);
             }
 
             return true;
@@ -391,6 +386,13 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
     startBot().catch(err => {
         console.error(chalk.bgRed.white('\n[FATAL] Gagal menjalankan startBot():'), err);
     });
+
+    // ── Restore persistent opts dari DB ───────────────────────
+    await global.loadDatabase()
+    if (global.db.data.settings?.self !== undefined) {
+        global.opts['self'] = !!global.db.data.settings.self
+        console.log('[opts] self mode restored:', global.opts['self'])
+    }
 
     // ── Load plugins ──────────────────────────────────────────
     // [FIX] Tunggu startBot selesai agar global.conn sudah tersedia

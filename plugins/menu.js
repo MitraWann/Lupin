@@ -17,6 +17,7 @@ async function getMediaCache(conn) {
     if (_mediaCache.data && (now - _mediaCache.ts) < _mediaCache.TTL) {
         return _mediaCache.data;
     }
+    if (!conn.waUploadToServer) throw new Error('[menu] waUploadToServer belum siap')
     const thumbBuffer = await conn.getFile(thumbUrl).then(f => f.data);
     const favBuffer = await conn.getFile(favUrl).then(f => f.data);
     const [thumbWAMC, favWAMC] = await Promise.all([
@@ -167,4 +168,4 @@ handler.help = ['menu'];
 handler.tags = ['main'];
 handler.command = /^menu(?:\s+(.+))?$/i;
 
-module.exports = handler; 
+module.exports = handler;

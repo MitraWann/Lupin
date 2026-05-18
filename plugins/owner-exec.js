@@ -7,6 +7,7 @@ let handler = async (m, _2) => {
   let _syntax = ''
   let _text = (/^=>/.test(usedPrefix) ? 'return ' : '') + noPrefix
   let old = m.exp * 1
+  conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } })
   try {
     let i = 15
     let f = {
@@ -18,6 +19,7 @@ let handler = async (m, _2) => {
       console.log(...args)
       return conn.reply(m.chat, util.format(...args), m)
     }, m, handler, require, conn, CustomArray, process, args, groupMetadata, f, f.exports, [conn, _2])
+    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
   } catch (e) {
     let err = await syntaxerror(_text, 'Execution Function', {
       allowReturnOutsideFunction: true,
@@ -25,6 +27,7 @@ let handler = async (m, _2) => {
     })
     if (err) _syntax = '```' + err + '```\n\n'
     _return = e
+    conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
   } finally {
     if (_return !== undefined) conn.reply(m.chat, _syntax + util.format(_return), m)
     m.exp = old
