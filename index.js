@@ -99,20 +99,8 @@ function start(file) {
             return start(file);
         }
 
-        // Exit tidak normal → watch file untuk restart saat file berubah
-        fs.watchFile(args[0], () => {
-            fs.unwatchFile(args[0]);
-            console.error('\x1b[31m%s\x1b[0m', `File ${args[0]} modified. Restarting...`);
-            start(file);
-        });
-
-        // [FIX #7] Bersihkan watchFile SEBELUM setTimeout restart
-        // agar tidak ada dua instance start() terpanggil:
-        // satu dari setTimeout dan satu lagi dari watchFile saat file berubah
-        setTimeout(() => {
-            fs.unwatchFile(args[0]); // pastikan watcher sudah bersih
-            start(file);
-        }, 2000);
+        // Exit tidak normal → restart setelah jeda 2 detik
+        setTimeout(() => start(file), 2000);
     });
 
     p.on('error', (err) => {
@@ -144,7 +132,7 @@ function start(file) {
     console.log(`💾 \x1b[33mTotal RAM: ${(os.totalmem() / 1024 ** 3).toFixed(2)} GB\x1b[0m`);
     console.log(`💽 \x1b[33mFree RAM:  ${(os.freemem()  / 1024 ** 3).toFixed(2)} GB\x1b[0m`);
     console.log('\x1b[33m%s\x1b[0m', '📃 Script by Wann');
-    console.log('\x1b[33m%s\x1b[0m', '🔗 Github: https://github.com/MitraWann/Lupin-MD');
+    console.log('\x1b[33m%s\x1b[0m', '🔗 Github: https://github.com/MitraWann/Flora');
 
     // [FIX] Hapus setInterval(() => {}, 1000) yang kosong dan sia-sia
 }

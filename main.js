@@ -5,6 +5,30 @@
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
 
+// ── Signal Protocol log filter ────────────────────────────
+const _origInfo = console.info.bind(console)
+const _origWarn = console.warn.bind(console)
+
+console.info = (...args) => {
+    const msg = args[0]
+    if (typeof msg === 'string') {
+        if (msg.startsWith('Closing session')) return _origInfo('[Signal] Closing session: registrationId=' + (args[1]?.registrationId ?? '?'))
+        if (msg.startsWith('Removing old closed session')) return _origInfo('[Signal] Removing old closed session: registrationId=' + (args[1]?.registrationId ?? '?'))
+        if (msg.startsWith('Opening session')) return _origInfo('[Signal] Opening session: registrationId=' + (args[1]?.registrationId ?? '?'))
+        if (msg.startsWith('Migrating session')) return _origInfo('[Signal] Migrating session: ' + (args[1] ?? ''))
+    }
+    _origInfo(...args)
+}
+
+console.warn = (...args) => {
+    const msg = args[0]
+    if (typeof msg === 'string') {
+        if (msg.startsWith('Session already closed')) return _origWarn('[Signal] Session already closed: registrationId=' + (args[1]?.registrationId ?? '?'))
+        if (msg.startsWith('Session already open')) return _origWarn('[Signal] Session already open')
+    }
+    _origWarn(...args)
+}
+
 (async () => {
     // ── Dependencies ─────────────────────────────────────────
     require('./config');
@@ -25,6 +49,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
         proto,
         Browsers
     } = await loadBaileys();
+    const useSQLiteAuthState = require('./lib/sqliteAuthState');
 
     const NodeCache        = require('node-cache');
     const pino             = require('pino');
@@ -63,7 +88,6 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
     const question = (text) => new Promise(resolve => rl.question(text, resolve));
 
     // ── Global API helper ─────────────────────────────────────
-    // [FIX] Pastikan global.APIs dan global.APIKeys ada sebelum diakses
     if (!global.APIs)    global.APIs    = {};
     if (!global.APIKeys) global.APIKeys = {};
 
@@ -82,7 +106,6 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
     global.prefix = new RegExp('^[' + (opts.prefix || '‎xzXZ/i!#$%+£¢€¥^°¶∆×÷π√✓©®:;?&.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']');
 
     // ── Database setup ────────────────────────────────────────
-    // [FIX] cloudDBAdapter tidak pernah di-import — tambahkan require kondisional
     let dbAdapter;
     if (/https?:\/\//.test(opts.db || '')) {
         let cloudDBAdapter;
@@ -104,8 +127,6 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
 
     global.loadDatabase = async function loadDatabase() {
         if (global.db.READ) {
-            // [FIX] clearInterval(this) tidak bekerja di dalam setInterval callback
-            // Gunakan referensi interval yang benar
             return new Promise(resolve => {
                 const interval = setInterval(function () {
                     if (!global.db.READ) {
@@ -136,7 +157,6 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
 
     // ── Session folder ────────────────────────────────────────
     const sessionFolder = '' + (opts._[0] || 'sessions');
-    // [FIX] Cek & buat folder sekaligus, tidak double existsSync
     global.isInit = !fs.existsSync(sessionFolder);
     if (global.isInit) {
         fs.mkdirSync(sessionFolder, { recursive: true });
@@ -153,7 +173,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
     }
 
     // ── Pengecekan Auth Awal ──────────────────────────────────
-    const { state: initState } = await useMultiFileAuthState(sessionFolder);
+    const { state: initState } = await useSQLiteAuthState(path.join(sessionFolder, 'sessions.db'));
 
     // ── WhatsApp version ──────────────────────────────────────
     const { version, isLatest } = await fetchLatestBaileysVersion();
@@ -229,7 +249,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
 
     // ── FUNGSI START BOT (Pusat Koneksi Utama) ────────────────
     async function startBot() {
-        const { state, saveCreds } = await useMultiFileAuthState(sessionFolder);
+        const { state, saveCreds } = await useSQLiteAuthState(path.join(sessionFolder, 'sessions.db'));
         const msgRetryCounterCache = new NodeCache();
 
         const socketConfig = {
@@ -319,6 +339,15 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
                 }
             } else if (connection === 'open') {
                 console.log(chalk.green('✓ Terhubung ke WhatsApp!'));
+                if (!global._jadibotRecovered) {
+                    global._jadibotRecovered = true;
+                    try {
+                        const { recoverSessions } = require('./lib/jadibotManager');
+                        await recoverSessions(global.conn);
+                    } catch (e) {
+                        console.error('[Jadibot] Gagal recover sessions:', e.message);
+                    }
+                }
             }
 
             if (global.db.data == null) await loadDatabase();
@@ -382,11 +411,6 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
         global.reloadHandler();
     }
 
-    // Jalankan bot pertama kali
-    startBot().catch(err => {
-        console.error(chalk.bgRed.white('\n[FATAL] Gagal menjalankan startBot():'), err);
-    });
-
     // ── Restore persistent opts dari DB ───────────────────────
     await global.loadDatabase()
     if (global.db.data.settings?.self !== undefined) {
@@ -394,10 +418,12 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
         console.log('[opts] self mode restored:', global.opts['self'])
     }
 
+    // Jalankan bot pertama kali
+    startBot().catch(err => {
+        console.error(chalk.bgRed.white('\n[FATAL] Gagal menjalankan startBot():'), err);
+    });
+
     // ── Load plugins ──────────────────────────────────────────
-    // [FIX] Tunggu startBot selesai agar global.conn sudah tersedia
-    // sebelum plugin loader dipanggil. Gunakan conn.logger via global.conn
-    // dengan guard agar tidak crash jika conn belum siap.
     const pluginsDir = path.join(__dirname, 'plugins');
     const isJsFile   = (f) => /\.js$/.test(f);
     const safeLog    = {
@@ -411,7 +437,6 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
         try {
             global.plugins[file] = require(path.join(pluginsDir, file));
         } catch (e) {
-            // [FIX] Ganti conn.logger (undefined) dengan safeLog
             safeLog.error(e);
             delete global.plugins[file];
         }
@@ -419,21 +444,21 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
     console.log('[Plugins loaded]', Object.keys(global.plugins));
 
     // ── Watch plugins folder for changes (hot reload) ─────────
-    global.reload = (event, filename) => {
+    global.reload = (event, filename, dir = pluginsDir) => {
         if (!filename || !isJsFile(filename)) return;
 
-        const fullPath = path.join(pluginsDir, filename);
+        const fullPath = path.join(dir, filename);
 
         if (fullPath in require.cache) {
             delete require.cache[fullPath];
             if (fs.existsSync(fullPath)) {
-                safeLog.info("re - require plugin '" + filename + "'");
+                safeLog.info("re - require " + (dir !== pluginsDir ? 'scrape' : 'plugin') + " '" + filename + "'");
             } else {
-                safeLog.warn("deleted plugin '" + filename + "'");
+                safeLog.warn("deleted " + (dir !== pluginsDir ? 'scrape' : 'plugin') + " '" + filename + "'");
                 return delete global.plugins[filename];
             }
         } else {
-            safeLog.info("requiring new plugin '" + filename + "'");
+            safeLog.info("requiring new " + (dir !== pluginsDir ? 'scrape' : 'plugin') + " '" + filename + "'");
         }
 
         const err = syntaxError(fs.readFileSync(fullPath), filename);
@@ -453,6 +478,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
     };
     Object.freeze(global.reload);
     fs.watch(pluginsDir, global.reload);
+    fs.watch(path.join(__dirname, 'lib/scrape'), (event, filename) => global.reload(event, filename, path.join(__dirname, 'lib/scrape')));
 
     // ── Check external tool availability ─────────────────────
     async function checkTools() {

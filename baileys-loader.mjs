@@ -35,6 +35,9 @@ export const loadBaileys = async () => {
         proto:                get('proto'),
         WAMessageStubType:    get('WAMessageStubType'),
         WA_DEFAULT_EPHEMERAL: get('WA_DEFAULT_EPHEMERAL'),
+        // Auth helpers
+        initAuthCreds: get('initAuthCreds'),
+        BufferJSON:    get('BufferJSON'),
 
         // Deprecated — di-set null, tidak ada warning
         MessageType:              null,

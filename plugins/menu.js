@@ -9,8 +9,9 @@ const _mediaCache = {
 };
 
 const thumbUrl = 'https://files.catbox.moe/vaq8z9.png';
-const favUrl = 'https://files.catbox.moe/kkz2tk.png';
-const link = 'https://flora.baik';
+const favUrl = 'https://files.catbox.moe/erti1c.png';
+const link = 'https://made.by.mitra';
+
 
 async function getMediaCache(conn) {
     const now = Date.now();
@@ -109,7 +110,7 @@ function buildCategoryList(categorized, sortedTags) {
     let index = 1;
     for (const tag of sortedTags) {
         const count = categorized[tag].length;
-        text += `→ ${tag} [${count}]\n`;
+        text += `→${tag} [${count}]\n`;
         index++;
     }
     const total = Object.values(categorized).reduce((a, b) => a + b.length, 0);
@@ -118,11 +119,11 @@ function buildCategoryList(categorized, sortedTags) {
 }
 
 function buildSingleCategory(tag, cmds) {
-    let text = `\`\`\`~$ list --${tag}\n\n→ ${tag}\n`;
+    let text = `\`\`\`~$ listmenu --${tag}\n\n→${tag}\n`;
     for (const cmd of cmds) {
-        text += `  • ${cmd}\n`;
+        text += `• ${cmd}\n`;
     }
-    text += `\n────────────────\n${cmds.length} commands\n.help <command>\n\`\`\``;
+    text += `\n────────────────\n${cmds.length} commands\`\`\``;
     return text;
 }
 
@@ -130,30 +131,31 @@ function buildAllCategories(categorized, sortedTags) {
     let text = '```~$ list --all\n\n';
     for (const tag of sortedTags) {
         const cmds = categorized[tag];
-        text += `→ ${tag}\n`;
+        text += `→${tag}\n`;
         for (const cmd of cmds) {
-            text += `  • ${cmd}\n`;
+            text += `• ${cmd}\n`;
         }
         text += '\n';
     }
     const total = Object.values(categorized).reduce((a, b) => a + b.length, 0);
-    text += `────────────────\n${total} commands\n.help <command>\n\`\`\``;
+    text += `────────────────\n${total} commands\`\`\``;
     return text;
 }
 
 let handler = async (m, { conn }) => {
+    const { version } = require('/home/container/package.json');
     const arg = m.text.trim().split(' ').slice(1).join(' ').toLowerCase().trim();
     const categorized = getCategorized();
     const sortedTags = getSortedTags(categorized);
 
     if (!arg) {
         const text = buildCategoryList(categorized, sortedTags);
-        return sendMenu(conn, m.chat, 'Flora Bot', 'Pilih kategori menu', text);
+        return sendMenu(conn, m.chat, `Flora🍀 v${version}`, 'Pilih kategori menu', text);
     }
 
     if (arg === 'all') {
         const text = buildAllCategories(categorized, sortedTags);
-        return sendMenu(conn, m.chat, 'Flora Bot — All Commands', 'Semua perintah tersedia', text);
+        return sendMenu(conn, m.chat, `Flora🍀 v${version} — All Commands`, 'Semua perintah tersedia', text);
     }
 
     if (!categorized[arg]) {
@@ -161,7 +163,7 @@ let handler = async (m, { conn }) => {
     }
 
     const text = buildSingleCategory(arg, categorized[arg]);
-    return sendMenu(conn, m.chat, `Flora — ${arg.toUpperCase()}`, `${categorized[arg].length} perintah tersedia`, text);
+    return sendMenu(conn, m.chat, `Flora🍀 v${version} — Menu ${arg}`, `${categorized[arg].length} perintah tersedia`, text);
 };
 
 handler.help = ['menu'];

@@ -8,8 +8,8 @@ const _mediaCache = {
 };
 
 const thumbUrl = 'https://files.catbox.moe/vaq8z9.png';
-const favUrl = 'https://files.catbox.moe/kkz2tk.png';
-const link = 'https://flora.baik';
+const favUrl = 'https://files.catbox.moe/erti1c.png';
+const link = 'https://made.by.mitra';
 
 async function getMediaCache(conn) {
     const now = Date.now();

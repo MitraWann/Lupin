@@ -66,7 +66,6 @@ module.exports = {
             ).catch(() => {})
         }
 
-        if (chatUpdate.messages.length > 1) console.log(chatUpdate.messages)
         let m = chatUpdate.messages[chatUpdate.messages.length - 1]
         if (!m) return
 
@@ -93,57 +92,42 @@ module.exports = {
                 if (user) {
                     if (!isNumber(user.saldo))        user.saldo        = 0
                     if (!isNumber(user.pengeluaran))  user.pengeluaran  = 0
-                    if (!isNumber(user.energi))       user.energi       = 100
                     if (!isNumber(user.title))        user.title        = 0
                     if (!isNumber(user.level))        user.level        = 0
                     if (!('location' in user))        user.location     = 'Gubuk'
                     if (!isNumber(user.exp))          user.exp          = 0
                     if (!isNumber(user.pc))           user.pc           = 0
-                    if (!isNumber(user.ojek))         user.ojek         = 0
                     if (!isNumber(user.coin))         user.coin         = 0
                     if (!isNumber(user.limit))        user.limit        = 100
                     if (!isNumber(user.token))        user.token        = 10
-                    if (!isNumber(user.lastkerja))    user.lastkerja    = 0
-                    if (!isNumber(user.money))        user.money        = 0
                     if (!isNumber(user.poin))         user.poin         = 0
                     if (!isNumber(user.bank))         user.bank         = 0
                     if (!isNumber(user.warn))         user.warn         = 0
                     if (!('banned' in user))          user.banned       = false
                     if (!isNumber(user.bannedTime))   user.bannedTime   = 0
-                    if (!isNumber(user.afk))          user.afk          = -1
-                    if (!('afkReason' in user))       user.afkReason    = ''
-                    if (!isNumber(user.antispam))     user.antispam     = 0
-                    if (!isNumber(user.lastngojek))   user.lastngojek   = 0
-                    if (!isNumber(user.lastseen))     user.lastseen     = 0
                     if (!('registered' in user))      user.registered   = false
                     if (!isNumber(user.command))      user.command      = 0
                     if (!isNumber(user.commandTotal)) user.commandTotal = 0
 
                     if (!user.registered) {
-                        // [FIX #5] getName pakai m.dbSender (sudah resolved), bukan m.sender (bisa LID)
                         if (!('name' in user))        user.name        = await this.getName(m.dbSender)
-                        if (!isNumber(user.skata))    user.skata       = 0
                         if (!isNumber(user.age))      user.age         = -1
                         if (!isNumber(user.regTime))  user.regTime     = -1
                         if (!isNumber(user.level))    user.level       = 0
-                        if (!user.job)                user.job         = 'Pengangguran'
                         if (!user.premium)            user.premium     = false
-                        if (!user.premiumTime)        user.premiumTime = 0
                         if (!user.role)               user.role        = 'Newbie ㋡'
                         if (!('autolevelup' in user)) user.autolevelup = true
-                        if (!isNumber(user.lasttaxi)) user.lasttaxi    = 0
-                        if (!isNumber(user.taxi))     user.taxi        = 0
                     }
                 } else {
                     // [FIX #5] getName pakai m.dbSender
                     global.db.data.users[m.dbSender] = {
-                        taxi: 0, lasttaxi: 0, saldo: 0, level: 0, location: 'Gubuk',
+                        saldo: 0, level: 0, location: 'Gubuk',
                         pc: 0, exp: 0, limit: 100, token: 10, skata: 0, lastkerja: 0,
-                        money: 0, poin: 0, balance: 0, ojek: 0, banned: false,
+                        money: 0, poin: 0, balance: 0, banned: false,
                         bannedTime: 0, warn: 0, afk: -1, afkReason: '', antispam: 0,
-                        lastngojek: 0, lastseen: 0, registered: false,
+                        lastngojek: 0, registered: false,
                         name: await this.getName(m.dbSender), age: -1, regTime: -1,
-                        premium: false, premiumTime: 0, job: 'Pengangguran',
+                        premium: false,
                         role: 'Newbie ㋡', autolevelup: true,
                         command: 0, commandTotal: 0,
                         ...(m.dbSender !== m.sender ? { _lid: m.sender } : {})
@@ -340,10 +324,11 @@ module.exports = {
                         : typeof _prefix === 'string'
                             ? [[new RegExp(str2Regex(_prefix)).exec(m.text), new RegExp(str2Regex(_prefix))]]
                             : [[[], new RegExp]]
-                ).find(p => p[1])
+                ).find(p => p[0])
 
                 // [FIX #2] before tanpa prefix — jalankan HANYA jika !match, tidak diulang lagi setelah match
-                if (typeof plugin.before === 'function' && !match) {
+                const matchFound = match && match[0] && match[0][0]
+                if (typeof plugin.before === 'function' && !matchFound) {
                     if (isBanned) continue
                     if (await plugin.before.call(this, m, {
                         match, conn: this, participants, groupMetadata,
@@ -351,7 +336,7 @@ module.exports = {
                     })) continue
                 }
 
-                if (!match) continue
+                if (!matchFound) continue
 
                 // [FIX #2] before dengan prefix — hanya sampai di sini jika match ada, before belum dipanggil
                 if (typeof plugin.before === 'function') {
@@ -555,7 +540,7 @@ module.exports = {
             if (global.opts?.['self']) return
 
             for (const { key, update } of updates) {
-                if (update.message !== null || update.messageStubType !== 1) continue
+                if (update.message !== null) continue
                 if (key.fromMe) continue
 
                 const deletedId = update.key?.id
